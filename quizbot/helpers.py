@@ -50,49 +50,59 @@ def detect_bot_change(new_status: BotMemberStatus) -> BotChangeType:
 
 
 async def upsert_channel(session: AsyncSession, chat: types.Chat) -> Channel:
-    channel = await session.get(Channel, chat.id)
-    if channel:
-        channel.title = chat.title
-        channel.username = chat.username
-        return channel
+    old_channel = await session.get(Channel, chat.id)
+    if old_channel:
+        old_channel.title = chat.title
+        old_channel.username = chat.username
+        return old_channel
 
-    channel = Channel(id=chat.id, title=chat.title, username=chat.username)
-    session.add(channel)
-    return channel
+    new_channel = Channel(id=chat.id, title=chat.title, username=chat.username)
+    session.add(new_channel)
+    return new_channel
 
 
-async def upsert_user(
-    session: AsyncSession, member: types.ResultChatMemberUnion
-) -> User:
-    user = await session.get(User, member.user.id)
-    if user:
-        user.first_name = member.user.first_name
-        user.last_name = member.user.last_name
-        user.username = member.user.username
-    else:
-        user = User(
-            id=member.user.id,
-            first_name=member.user.first_name,
-            last_name=member.user.last_name,
-            username=member.user.username,
-        )
-        session.add(user)
+async def upsert_user(session: AsyncSession, user: types.User) -> User:
+    old_user = await session.get(User, user.id)
+    if old_user:
+        old_user.first_name = user.first_name
+        old_user.last_name = user.last_name
+        old_user.username = user.username
+        return old_user
 
-    return user
+    new_user = User(
+        id=user.id,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        username=user.username,
+    )
+
+    session.add(new_user)
+    return new_user
 
 
 async def add_channel_admins(
-    session: AsyncSession, channel: Channel, admins: list[types.ResultChatMemberUnion]
+    session: AsyncSession, channel_id: int, admin_users: list[types.User]
 ) -> None:
     new_admins = []
-    for admin_member in admins:
-        if not admin_member.user.is_bot:
-            user = await upsert_user(session, admin_member)
-            new_admin = Admin(user_id=user.id, channel_id=channel.id)
+    for admin_user in admin_users:
+        if not admin_user.is_bot:
+            user = await upsert_user(session, admin_user)
+            new_admin = Admin(user_id=user.id, channel_id=channel_id)
             new_admins.append(new_admin)
     session.add_all(new_admins)
 
 
-async def delete_channel_admins(session: AsyncSession, channel: Channel) -> None:
-    stmt = delete(Admin).where(Admin.channel_id == channel.id)
+async def delete_channel_admins(
+    session: AsyncSession, channel_id: int, admin_ids: list[int] | None = None
+) -> None:
+    if admin_ids is not None and not admin_ids:
+        return
+
+    if admin_ids:
+        stmt = delete(Admin).where(
+            (Admin.channel_id == channel_id) & (Admin.user_id.in_(admin_ids))
+        )
+    else:
+        stmt = delete(Admin).where(Admin.channel_id == channel_id)
+
     await session.execute(stmt)

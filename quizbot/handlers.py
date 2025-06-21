@@ -3,7 +3,7 @@ import asyncio
 from aiogram import types
 from bot import bot
 from db import get_session
-from enums import BotChangeType, UserChangeType
+from enums import BotChangeType
 from helpers import (
     add_channel_admins,
     delete_channel_admins,
@@ -25,10 +25,11 @@ async def my_chat_member_handler(update: types.ChatMemberUpdated) -> None:
         channel = await upsert_channel(session, update.chat)
         if change_type == BotChangeType.BECAME_ADMIN:
             await asyncio.sleep(1)
-            admin_members = await bot.get_chat_administrators(channel.id)
-            await add_channel_admins(session, channel, admin_members)
+            admins = await bot.get_chat_administrators(channel.id)
+            admin_users = [admin.user for admin in admins]
+            await add_channel_admins(session, channel.id, admin_users)
         elif change_type in {BotChangeType.LEFT, BotChangeType.BANNED}:
-            await delete_channel_admins(session, channel)
+            await delete_channel_admins(session, channel.id)
 
         await session.commit()
 
