@@ -1,52 +1,28 @@
 from aiogram import types
-from constants import BOT_STATUS_MAPPING, USER_STATUS_MAPPING
-from enums import (
-    BotChangeType,
-    BotMemberStatus,
-    UserChangeType,
-    UserMemberStatus,
-)
+from constants import ADMIN_ROLES, NON_ADMIN_ROLES
+from enums import ChangeType
 from models import Admin, Channel, User
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def extract_user_new_status(update: types.ChatMemberUpdated) -> UserMemberStatus:
-    match update.new_chat_member:
-        case types.ChatMemberOwner():
-            return UserMemberStatus.OWNER
-        case types.ChatMemberAdministrator():
-            return UserMemberStatus.ADMIN
-        case types.ChatMemberMember():
-            return UserMemberStatus.MEMBER
-        case types.ChatMemberLeft():
-            return UserMemberStatus.LEFT
-        case types.ChatMemberBanned():
-            return UserMemberStatus.BANNED
-        case _:
-            raise ValueError(
-                f"Unknown chat member type: {type(update.new_chat_member)}"
-            )
+def detect_bot_change(update: types.ChatMemberUpdated) -> ChangeType:
+    if isinstance(update.new_chat_member, ADMIN_ROLES):
+        return ChangeType.BECAME_ADMIN
+    elif isinstance(update.new_chat_member, NON_ADMIN_ROLES):
+        return ChangeType.LEFT_ADMIN
 
 
-def extract_bot_new_status(update: types.ChatMemberUpdated) -> BotMemberStatus:
-    match update.new_chat_member:
-        case types.ChatMemberAdministrator():
-            return BotMemberStatus.ADMIN
-        case types.ChatMemberLeft():
-            return BotMemberStatus.LEFT
-        case types.ChatMemberBanned():
-            return BotMemberStatus.BANNED
-        case _:
-            raise ValueError(f"Unknown bot member type: {type(update.new_chat_member)}")
+def detect_user_change(update: types.ChatMemberUpdated) -> ChangeType | None:
+    old_member = update.old_chat_member
+    new_member = update.new_chat_member
 
+    if isinstance(new_member, ADMIN_ROLES):
+        return ChangeType.BECAME_ADMIN
+    if isinstance(old_member, ADMIN_ROLES) and isinstance(new_member, NON_ADMIN_ROLES):
+        return ChangeType.LEFT_ADMIN
 
-def detect_user_change(new_status: UserMemberStatus) -> UserChangeType:
-    return USER_STATUS_MAPPING[new_status]
-
-
-def detect_bot_change(new_status: BotMemberStatus) -> BotChangeType:
-    return BOT_STATUS_MAPPING[new_status]
+    return None
 
 
 async def upsert_channel(session: AsyncSession, chat: types.Chat) -> Channel:
@@ -83,13 +59,13 @@ async def upsert_user(session: AsyncSession, user: types.User) -> User:
 async def add_channel_admins(
     session: AsyncSession, channel_id: int, admin_users: list[types.User]
 ) -> None:
-    new_admins = []
+    admins_to_add = []
     for admin_user in admin_users:
         if not admin_user.is_bot:
             user = await upsert_user(session, admin_user)
             new_admin = Admin(user_id=user.id, channel_id=channel_id)
-            new_admins.append(new_admin)
-    session.add_all(new_admins)
+            admins_to_add.append(new_admin)
+    session.add_all(admins_to_add)
 
 
 async def delete_channel_admins(
