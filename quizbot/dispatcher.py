@@ -1,10 +1,10 @@
 from aiogram import Dispatcher
 from aiogram.filters import CommandStart
-from handlers import handle_bot_status_change, handle_user_status_change, start_handler
+from handlers import command_start, handle_bot_status_change, handle_user_status_change
 
 dp = Dispatcher()
 
 
-dp.message.register(start_handler, CommandStart())
+dp.message.register(command_start, CommandStart())
 dp.my_chat_member.register(handle_bot_status_change)
 dp.chat_member.register(handle_user_status_change)

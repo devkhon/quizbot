@@ -1,9 +1,9 @@
 from aiogram import types
 from constants import ADMIN_ROLES, NON_ADMIN_ROLES
-from enums import ChangeType
 from models import Admin, Channel, User
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from type import ChangeType
 
 
 def detect_bot_change(update: types.ChatMemberUpdated) -> ChangeType:
