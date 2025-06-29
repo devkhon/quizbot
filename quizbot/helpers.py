@@ -1,9 +1,11 @@
 from aiogram import types
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from constants import ADMIN_ROLES, NON_ADMIN_ROLES
-from models import Admin, Channel, User
-from sqlalchemy import delete
+from models import Admin, Channel, Option, Quiz, User
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from type import ChangeType
+from sqlalchemy.orm import joinedload
+from type import ChangeType, QuizData
 
 
 def detect_bot_change(update: types.ChatMemberUpdated) -> ChangeType:
@@ -82,3 +84,45 @@ async def delete_channel_admins(
         stmt = delete(Admin).where(Admin.channel_id == channel_id)
 
     await session.execute(stmt)
+
+
+async def get_user_channels(session: AsyncSession, user: types.User) -> list[Channel]:
+    stmt = (
+        select(Admin).where(Admin.user_id == user.id).options(joinedload(Admin.channel))
+    )
+
+    admins = (await session.scalars(stmt)).all()
+    channels = [admin.channel for admin in admins]
+
+    return channels
+
+
+def create_keyboard(*btnList: tuple[list[str], int]) -> types.ReplyKeyboardMarkup:
+    keyboard = []
+
+    for list in btnList:
+        btns, cols = list
+        row = [
+            [KeyboardButton(text=btn) for btn in btns[i : i + cols]]
+            for i in range(0, len(btns), cols)
+        ]
+        keyboard.extend(row)
+
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
+
+async def add_quiz(session: AsyncSession, data: QuizData) -> Quiz:
+    quiz = Quiz(
+        question=data["question"],
+        correct=data["correct"],
+        channel_id=data["channel"].id,
+    )
+    session.add(quiz)
+    await session.flush()
+
+    options = data["options"]
+    session.add_all(
+        [Option(option=op, order=i, quiz_id=quiz.id) for i, op in enumerate(options)]
+    )
+
+    return quiz
