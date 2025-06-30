@@ -5,6 +5,7 @@ from handlers import (
     confirm_quiz,
     handle_addquiz_command,
     handle_bot_status_change,
+    handle_explanation,
     handle_option_input,
     handle_question_input,
     handle_start_command,
@@ -22,10 +23,11 @@ quiz_state_filter = StateFilter(*QuizForm.__all_states__)
 dp.message.register(handle_start_command, CommandStart())
 dp.message.register(handle_addquiz_command, Command("addquiz"))
 dp.message.register(cancel, quiz_state_filter, F.text == Btn.CANCEL)
-dp.message.register(select_channel, QuizForm.channel)
+dp.message.register(select_channel, QuizForm.select_channel)
 dp.message.register(handle_question_input, QuizForm.question)
-dp.message.register(handle_option_input, QuizForm.options)
-dp.message.register(select_correct_option, QuizForm.correct)
+dp.message.register(handle_option_input, QuizForm.collect_options)
+dp.message.register(select_correct_option, QuizForm.correct_option)
+dp.message.register(handle_explanation, QuizForm.explanation)
 dp.message.register(confirm_quiz, QuizForm.confirmation)
 dp.my_chat_member.register(handle_bot_status_change)
 dp.chat_member.register(handle_user_status_change)

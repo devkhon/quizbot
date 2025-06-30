@@ -5,17 +5,19 @@ from models import Channel
 
 
 class QuizForm(StatesGroup):
-    channel = State()
+    select_channel = State()
     question = State()
-    options = State()
-    correct = State()
+    collect_options = State()
+    correct_option = State()
+    explanation = State()
     confirmation = State()
 
 
 class QuizData(TypedDict):
     channels: list[Channel]
-    titles: list[str]
+    channel_titles: list[str]
     channel: Channel
     question: str
     options: list[str]
-    correct: int
+    correct_index: int
+    explanation: str | None
