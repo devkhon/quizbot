@@ -4,6 +4,7 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
 from bot import bot
+from constants import ChangeType
 from db import AsyncSessionLocal
 from helpers import (
     add_channel_admins,
@@ -16,17 +17,11 @@ from helpers import (
     upsert_channel,
     upsert_user,
 )
-from type import ChangeType, QuizData, QuizForm
+from messages import Btn, Msg
+from type import QuizData, QuizForm
 
 
-async def command_start(message: types.Message) -> None:
-    async with AsyncSessionLocal() as session:
-        await upsert_user(session, message.from_user)
-        await session.commit()
-    await message.answer("Hello World!")
-
-
-async def bot_status_change(update: types.ChatMemberUpdated) -> None:
+async def handle_bot_status_change(update: types.ChatMemberUpdated) -> None:
     change_type = detect_bot_change(update)
 
     async with AsyncSessionLocal() as session:
@@ -42,7 +37,7 @@ async def bot_status_change(update: types.ChatMemberUpdated) -> None:
         await session.commit()
 
 
-async def user_status_change(update: types.ChatMemberUpdated) -> None:
+async def handle_user_status_change(update: types.ChatMemberUpdated) -> None:
     change_type = detect_user_change(update)
     user = update.new_chat_member.user
 
@@ -58,122 +53,134 @@ async def user_status_change(update: types.ChatMemberUpdated) -> None:
         await session.commit()
 
 
-async def command_addquiz(message: types.Message, state: FSMContext) -> None:
+async def handle_start_command(message: types.Message) -> None:
+    async with AsyncSessionLocal() as session:
+        await upsert_user(session, message.from_user)
+        await session.commit()
+    await message.answer(Msg.START)
+
+
+async def handle_addquiz_command(message: types.Message, state: FSMContext) -> None:
     async with AsyncSessionLocal() as session:
         channels = await get_user_channels(session, message.from_user)
-        titles = [ch.title for ch in channels]
         if not channels:
-            await message.answer("You have no channels to add a quiz to.")
+            await message.answer(Msg.NO_CHANNELS)
             return
-        await state.set_data({"channels": channels, "titles": titles})
+
         await state.set_state(QuizForm.channel)
-        keyboard = create_keyboard((titles, 2), (["cancel"], 1))
-        await message.answer("Select a channel:", reply_markup=keyboard)
+        titles = [ch.title for ch in channels]
+        await state.set_data({"channels": channels, "titles": titles})
+        keyboard = create_keyboard((titles, 2), ([Btn.CANCEL], 1))
+        await message.answer(Msg.PROMPT_CHANNEL, reply_markup=keyboard)
 
 
 async def select_channel(message: types.Message, state: FSMContext) -> None:
     data: QuizData = await state.get_data()
     if message.text not in data["titles"]:
-        await message.answer("Invalid channel. Please select again.")
+        await message.answer(Msg.INVALID_RESPONSE)
         return
 
-    channel = data["channels"][data["titles"].index(message.text)]
-    keyboard = create_keyboard((["go back", "cancel"], 2))
     await state.set_state(QuizForm.question)
+    channel = data["channels"][data["titles"].index(message.text)]
     await state.update_data(channel=channel)
-    await message.answer("What is the quiz question?", reply_markup=keyboard)
+    keyboard = create_keyboard(([Btn.GO_BACK, Btn.CANCEL], 2))
+    await message.answer(Msg.PROMPT_QUESTION, reply_markup=keyboard)
 
 
-async def enter_question(message: types.Message, state: FSMContext) -> None:
+async def handle_question_input(message: types.Message, state: FSMContext) -> None:
     if not message.text:
         return
 
-    if message.text.lower() == "go back":
-        data: QuizData = await state.get_data()
-        keyboard = create_keyboard((data["titles"], 2), (["cancel"], 1))
+    if message.text == Btn.GO_BACK:
         await state.set_state(QuizForm.channel)
-        await message.answer("Select a channel:", reply_markup=keyboard)
+        data: QuizData = await state.get_data()
+        keyboard = create_keyboard((data["titles"], 2), ([Btn.CANCEL], 1))
+        await message.answer(Msg.PROMPT_CHANNEL, reply_markup=keyboard)
         return
 
     if len(message.text) > 300:
-        await message.answer("Questions must be 300 characters or shorter.")
+        await message.answer(Msg.QUESTION_TOO_LONG)
         return
 
-    keyboard = create_keyboard((["go back", "cancel"], 2))
-    await state.update_data(question=message.text, options=[])
     await state.set_state(QuizForm.options)
-    await message.answer("Send a quiz option: ", reply_markup=keyboard)
+    await state.update_data(question=message.text, options=[])
+    keyboard = create_keyboard(([Btn.GO_BACK, Btn.CANCEL], 2))
+    await message.answer(Msg.PROMPT_OPTION, reply_markup=keyboard)
 
 
-async def enter_options(message: types.Message, state: FSMContext) -> None:
+async def handle_option_input(message: types.Message, state: FSMContext) -> None:
     if not message.text:
         return
 
-    if message.text.lower() == "go back":
-        keyboard = create_keyboard((["go back", "cancel"], 2))
+    if message.text == Btn.GO_BACK:
         await state.set_state(QuizForm.question)
-        await message.answer("What is the quiz question?", reply_markup=keyboard)
+        keyboard = create_keyboard(([Btn.GO_BACK, Btn.CANCEL], 2))
+        await message.answer(Msg.PROMPT_QUESTION, reply_markup=keyboard)
         return
 
     data: QuizData = await state.get_data()
 
-    if message.text.lower() == "finish adding options":
+    if message.text == Btn.FINISH:
         if len(data["options"]) < 2:
-            await message.answer("Please add at least two options before finishing.")
+            await message.answer(Msg.NEED_TWO_OPTIONS)
             return
 
-        keyboard = create_keyboard((data["options"], 2), (["go back", "cancel"], 2))
         await state.set_state(QuizForm.correct)
-        await message.answer("Select the correct option: ", reply_markup=keyboard)
+        keyboard = create_keyboard((data["options"], 2), ([Btn.GO_BACK, Btn.CANCEL], 2))
+        await message.answer(Msg.PROMPT_SELECT_CORRECT, reply_markup=keyboard)
         return
 
     if len(message.text) > 100:
-        await message.answer("Options must be 100 characters or shorter.")
+        await message.answer(Msg.OPTION_TOO_LONG)
         return
 
     if len(data["options"]) >= 10:
-        await message.answer("You can add at most 10 options.")
+        await message.answer(Msg.MAX_OPTIONS_REACHED)
         return
 
     data["options"].append(message.text)
-    keyboard = create_keyboard(
-        (["finish adding options"] if len(data["options"]) >= 2 else [], 1),
-        (["go back", "cancel"], 2),
-    )
     await state.update_data(options=data["options"])
-    await message.answer("Option added. Send another or stop: ", reply_markup=keyboard)
+    keyboard = create_keyboard(
+        ([Btn.FINISH] if len(data["options"]) >= 2 else [], 1),
+        ([Btn.GO_BACK, Btn.CANCEL], 2),
+    )
+    await message.answer(
+        Msg.OPTION_ADDED.format(finish_btn=Btn.FINISH), reply_markup=keyboard
+    )
 
 
 async def select_correct_option(message: types.Message, state: FSMContext) -> None:
     if not message.text:
         return
 
-    if message.text.lower() == "go back":
-        keyboard = create_keyboard((["go back", "cancel"], 2))
+    if message.text == Btn.GO_BACK:
         await state.set_state(QuizForm.options)
-        await message.answer("Send a quiz optons: ", reply_markup=keyboard)
+        keyboard = create_keyboard(([Btn.GO_BACK, Btn.CANCEL], 2))
+        await message.answer(Msg.PROMPT_OPTION, reply_markup=keyboard)
         return
 
     data: QuizData = await state.get_data()
 
     if message.text not in data["options"]:
-        await message.answer("Invalid option. Please select again.")
+        await message.answer(Msg.INVALID_RESPONSE)
         return
 
-    keyboard = create_keyboard(
-        (["approve", "disapprove"], 2), (["go back", "cancel"], 2)
-    )
-
+    await state.set_state(QuizForm.confirmation)
     data["correct"] = data["options"].index(message.text)
-
     await state.update_data(correct=data["correct"])
-    await state.set_state(QuizForm.confirm)
+
+    keyboard = create_keyboard(
+        ([Btn.APPROVE, Btn.DISAPPROVE], 2), ([Btn.GO_BACK, Btn.CANCEL], 2)
+    )
     await message.answer(
-        f"Confirm quiz\n"
-        f"Channel: {data['channel'].title}\n"
-        f"Question: {data['question']}\n"
-        f"Options: {', '.join(data['options'])}\n"
-        f"Correct: {data['options'][data['correct']]}\n",
+        Msg.PREVIEW.format(
+            channel=data["channel"].title,
+            question=data["question"],
+            options="\n".join(
+                [f"\t{i + 1}. {opt}" for i, opt in enumerate(data["options"])]
+            ),
+            correct=data["options"][data["correct"]],
+        ),
         reply_markup=keyboard,
     )
 
@@ -184,33 +191,33 @@ async def confirm_quiz(message: types.Message, state: FSMContext) -> None:
 
     data: QuizData = await state.get_data()
 
-    if message.text.lower() == "go back":
-        keyboard = create_keyboard((data["options"], 2), (["go back", "cancel"], 2))
+    if message.text == Btn.GO_BACK:
         await state.set_state(QuizForm.correct)
-        await message.answer("Select the correct option: ", reply_markup=keyboard)
+        keyboard = create_keyboard((data["options"], 2), ([Btn.GO_BACK, Btn.CANCEL], 2))
+        await message.answer(Msg.PROMPT_SELECT_CORRECT, reply_markup=keyboard)
         return
 
-    if message.text.lower() == "disapprove":
-        await state.clear()
-        await message.answer("Quiz discarded.", reply_markup=ReplyKeyboardRemove())
-        return
-
-    if message.text.lower() == "approve":
-        async with AsyncSessionLocal() as session:
-            quiz = await add_quiz(session, data)
-            print(quiz)
-            await session.commit()
+    if message.text == Btn.DISAPPROVE:
         await state.clear()
         await message.answer(
-            "Quiz added to database.", reply_markup=ReplyKeyboardRemove()
+            Msg.CANCELED.format(status="disapproves"),
+            reply_markup=ReplyKeyboardRemove(),
         )
         return
 
-    await message.answer("Invalid response. Please choose one of the buttons.")
+    if message.text == Btn.APPROVE:
+        async with AsyncSessionLocal() as session:
+            await add_quiz(session, data)
+            await session.commit()
+        await state.clear()
+        await message.answer(Msg.SAVED, reply_markup=ReplyKeyboardRemove())
+        return
+
+    await message.answer(Msg.INVALID_RESPONSE)
 
 
 async def cancel(message: types.Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer(
-        "Adding a quiz to channel canceled.", reply_markup=ReplyKeyboardRemove()
+        Msg.CANCELED.format(status="Canceled"), reply_markup=ReplyKeyboardRemove()
     )

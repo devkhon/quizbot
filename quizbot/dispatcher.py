@@ -1,30 +1,31 @@
 from aiogram import Dispatcher, F
 from aiogram.filters import Command, CommandStart, StateFilter
 from handlers import (
-    bot_status_change,
     cancel,
-    command_addquiz,
-    command_start,
     confirm_quiz,
-    enter_options,
-    enter_question,
+    handle_addquiz_command,
+    handle_bot_status_change,
+    handle_option_input,
+    handle_question_input,
+    handle_start_command,
+    handle_user_status_change,
     select_channel,
     select_correct_option,
-    user_status_change,
 )
+from messages import Btn
 from type import QuizForm
 
 dp = Dispatcher()
 
 quiz_state_filter = StateFilter(*QuizForm.__all_states__)
 
-dp.message.register(command_start, CommandStart())
-dp.message.register(command_addquiz, Command("addquiz"))
-dp.message.register(cancel, quiz_state_filter, F.text.casefold() == "cancel")
+dp.message.register(handle_start_command, CommandStart())
+dp.message.register(handle_addquiz_command, Command("addquiz"))
+dp.message.register(cancel, quiz_state_filter, F.text == Btn.CANCEL)
 dp.message.register(select_channel, QuizForm.channel)
-dp.message.register(enter_question, QuizForm.question)
-dp.message.register(enter_options, QuizForm.options)
+dp.message.register(handle_question_input, QuizForm.question)
+dp.message.register(handle_option_input, QuizForm.options)
 dp.message.register(select_correct_option, QuizForm.correct)
-dp.message.register(confirm_quiz, QuizForm.confirm)
-dp.my_chat_member.register(bot_status_change)
-dp.chat_member.register(user_status_change)
+dp.message.register(confirm_quiz, QuizForm.confirmation)
+dp.my_chat_member.register(handle_bot_status_change)
+dp.chat_member.register(handle_user_status_change)

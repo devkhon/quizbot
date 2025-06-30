@@ -1,11 +1,11 @@
 from aiogram import types
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-from constants import ADMIN_ROLES, NON_ADMIN_ROLES
+from constants import ADMIN_ROLES, NON_ADMIN_ROLES, ChangeType
 from models import Admin, Channel, Option, Quiz, User
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from type import ChangeType, QuizData
+from type import QuizData
 
 
 def detect_bot_change(update: types.ChatMemberUpdated) -> ChangeType:
@@ -97,16 +97,15 @@ async def get_user_channels(session: AsyncSession, user: types.User) -> list[Cha
     return channels
 
 
-def create_keyboard(*btnList: tuple[list[str], int]) -> types.ReplyKeyboardMarkup:
+def create_keyboard(*button_groups: tuple[list[str], int]) -> types.ReplyKeyboardMarkup:
     keyboard = []
 
-    for list in btnList:
-        btns, cols = list
-        row = [
-            [KeyboardButton(text=btn) for btn in btns[i : i + cols]]
-            for i in range(0, len(btns), cols)
+    for buttons, columns in button_groups:
+        rows = [
+            [KeyboardButton(text=btn) for btn in buttons[i : i + columns]]
+            for i in range(0, len(buttons), columns)
         ]
-        keyboard.extend(row)
+        keyboard.extend(rows)
 
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
