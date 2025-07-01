@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
     pass
 
 
-class TimestampMixin:
+class TimeStamped:
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -26,7 +26,7 @@ class TimestampMixin:
     )
 
 
-class User(Base, TimestampMixin):
+class User(Base, TimeStamped):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
@@ -45,7 +45,7 @@ class User(Base, TimestampMixin):
         )
 
 
-class Channel(Base, TimestampMixin):
+class Channel(Base, TimeStamped):
     __tablename__ = "channels"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
@@ -65,7 +65,7 @@ class Channel(Base, TimestampMixin):
         )
 
 
-class Admin(Base, TimestampMixin):
+class Admin(Base, TimeStamped):
     __tablename__ = "admins"
     __table_args__ = (UniqueConstraint("user_id", "channel_id"),)
 
@@ -82,7 +82,7 @@ class Admin(Base, TimestampMixin):
         return f"Admin(id={self.id!r}, user_id={self.user_id!r}, channel_id={self.channel_id!r})"  # noqa: E501
 
 
-class Quiz(Base, TimestampMixin):
+class Quiz(Base, TimeStamped):
     __tablename__ = "quizzes"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -104,7 +104,7 @@ class Quiz(Base, TimestampMixin):
         )
 
 
-class Option(Base, TimestampMixin):
+class Option(Base, TimeStamped):
     __tablename__ = "options"
     __table_args__ = (UniqueConstraint("quiz_id", "order"),)
 

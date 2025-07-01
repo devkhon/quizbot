@@ -2,7 +2,6 @@ from aiogram import types
 from aiogram.enums.chat_type import ChatType
 from aiogram.filters import BaseFilter
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-from constants import ADMIN_ROLES, NON_ADMIN_ROLES, ChangeType
 from models import Admin, Channel, Option, Quiz, User
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,25 +15,6 @@ class ChatTypeFilter(BaseFilter):
 
     async def __call__(self, message: types.Message) -> bool:
         return message.chat.type == self.chat_type
-
-
-def detect_bot_change(update: types.ChatMemberUpdated) -> ChangeType:
-    if isinstance(update.new_chat_member, ADMIN_ROLES):
-        return ChangeType.BECAME_ADMIN
-    elif isinstance(update.new_chat_member, NON_ADMIN_ROLES):
-        return ChangeType.LEFT_ADMIN
-
-
-def detect_user_change(update: types.ChatMemberUpdated) -> ChangeType | None:
-    old_member = update.old_chat_member
-    new_member = update.new_chat_member
-
-    if isinstance(new_member, ADMIN_ROLES):
-        return ChangeType.BECAME_ADMIN
-    if isinstance(old_member, ADMIN_ROLES) and isinstance(new_member, NON_ADMIN_ROLES):
-        return ChangeType.LEFT_ADMIN
-
-    return None
 
 
 async def upsert_channel(session: AsyncSession, chat: types.Chat) -> Channel:
@@ -120,7 +100,7 @@ def create_keyboard(*button_groups: tuple[list[str], int]) -> types.ReplyKeyboar
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
 
-async def add_quiz(session: AsyncSession, data: QuizData) -> Quiz:
+async def save_quiz_to_db(session: AsyncSession, data: QuizData) -> Quiz:
     quiz = Quiz(
         question=data["question"],
         correct=data["correct"],

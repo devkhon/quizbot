@@ -4,16 +4,13 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
 from bot import bot
-from constants import ChangeType
 from db import AsyncSessionLocal
 from helpers import (
     add_channel_admins,
-    add_quiz,
     create_keyboard,
     delete_channel_admins,
-    detect_bot_change,
-    detect_user_change,
     get_user_channels,
+    save_quiz_to_db,
     upsert_channel,
     upsert_user,
 )
@@ -21,35 +18,34 @@ from messages import OPTION_EMOJIS, Btn, Msg
 from type import QuizData, QuizForm
 
 
-async def handle_bot_status_change(update: types.ChatMemberUpdated) -> None:
-    change_type = detect_bot_change(update)
-
+async def handle_bot_join(event: types.ChatMemberUpdated) -> None:
     async with AsyncSessionLocal() as session:
-        channel = await upsert_channel(session, update.chat)
-        if change_type == ChangeType.BECAME_ADMIN:
-            await asyncio.sleep(1)
-            admins = await bot.get_chat_administrators(channel.id)
-            admin_users = [admin.user for admin in admins]
-            await add_channel_admins(session, channel.id, admin_users)
-        elif change_type == ChangeType.LEFT_ADMIN:
-            await delete_channel_admins(session, channel.id)
-
+        channel = await upsert_channel(session, event.chat)
+        await asyncio.sleep(1)
+        admins = await bot.get_chat_administrators(channel.id)
+        admin_users = [admin.user for admin in admins]
+        await add_channel_admins(session, channel.id, admin_users)
         await session.commit()
 
 
-async def handle_user_status_change(update: types.ChatMemberUpdated) -> None:
-    change_type = detect_user_change(update)
-    user = update.new_chat_member.user
-
-    if change_type is None:
-        return
-
+async def handle_bot_leave(event: types.ChatMemberUpdated) -> None:
     async with AsyncSessionLocal() as session:
-        if change_type == ChangeType.BECAME_ADMIN:
-            await add_channel_admins(session, update.chat.id, [user])
-        elif change_type == ChangeType.LEFT_ADMIN:
-            await delete_channel_admins(session, update.chat.id, [user.id])
+        channel = await upsert_channel(session, event.chat)
+        await delete_channel_admins(session, channel.id)
+        await session.commit()
 
+
+async def handle_user_promote(event: types.ChatMemberUpdated) -> None:
+    user = event.new_chat_member.user
+    async with AsyncSessionLocal() as session:
+        await add_channel_admins(session, event.chat.id, [user])
+        await session.commit()
+
+
+async def handle_user_demote(event: types.ChatMemberUpdated) -> None:
+    user = event.new_chat_member.user
+    async with AsyncSessionLocal() as session:
+        await delete_channel_admins(session, event.chat.id, [user.id])
         await session.commit()
 
 
@@ -60,7 +56,7 @@ async def handle_start_command(message: types.Message) -> None:
     await message.answer(Msg.START)
 
 
-async def handle_addquiz_command(message: types.Message, state: FSMContext) -> None:
+async def start_quiz_creation(message: types.Message, state: FSMContext) -> None:
     async with AsyncSessionLocal() as session:
         channels = await get_user_channels(session, message.from_user)
         if not channels:
@@ -231,7 +227,7 @@ async def confirm_quiz(message: types.Message, state: FSMContext) -> None:
 
     if message.text == Btn.APPROVE:
         async with AsyncSessionLocal() as session:
-            await add_quiz(session, data)
+            await save_quiz_to_db(session, data)
             await session.commit()
         await state.clear()
         await message.answer(Msg.SAVED, reply_markup=ReplyKeyboardRemove())
@@ -240,7 +236,7 @@ async def confirm_quiz(message: types.Message, state: FSMContext) -> None:
     await message.answer(Msg.INVALID_RESPONSE)
 
 
-async def cancel(message: types.Message, state: FSMContext) -> None:
+async def cancel_quiz(message: types.Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer(
         Msg.CANCELED.format(status="Canceled"), reply_markup=ReplyKeyboardRemove()
