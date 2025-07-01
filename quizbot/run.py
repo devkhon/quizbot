@@ -1,7 +1,7 @@
 import asyncio
 
 from bot import bot
-from dispatcher import dp
+from routers import dp
 
 
 def on_start() -> None:

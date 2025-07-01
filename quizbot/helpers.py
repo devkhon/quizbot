@@ -1,4 +1,6 @@
 from aiogram import types
+from aiogram.enums.chat_type import ChatType
+from aiogram.filters import BaseFilter
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from constants import ADMIN_ROLES, NON_ADMIN_ROLES, ChangeType
 from models import Admin, Channel, Option, Quiz, User
@@ -6,6 +8,14 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from type import QuizData
+
+
+class ChatTypeFilter(BaseFilter):
+    def __init__(self, chat_type: ChatType):
+        self.chat_type = chat_type
+
+    async def __call__(self, message: types.Message) -> bool:
+        return message.chat.type == self.chat_type
 
 
 def detect_bot_change(update: types.ChatMemberUpdated) -> ChangeType:
