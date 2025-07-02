@@ -1,17 +1,20 @@
 from datetime import datetime
 
-class Base: ...
+from sqlalchemy.orm import DeclarativeBase
 
-class TimestampMixin:
+class Base(DeclarativeBase): ...
+
+class TimeStamped:
     created_at: datetime
     updated_at: datetime
 
-class User(Base, TimestampMixin):
+class User(Base, TimeStamped):
     id: int
     first_name: str
     last_name: str | None
     username: str | None
     admins: list[Admin]
+    quizzes: list[Quiz]
 
     def __init__(
         self,
@@ -22,7 +25,7 @@ class User(Base, TimestampMixin):
     ) -> None: ...
     def __repr__(self) -> str: ...
 
-class Channel(Base, TimestampMixin):
+class Channel(Base, TimeStamped):
     id: int
     title: str
     username: str | None
@@ -32,7 +35,7 @@ class Channel(Base, TimestampMixin):
     def __init__(self, id: int, title: str, username: str | None = ...) -> None: ...
     def __repr__(self) -> str: ...
 
-class Admin(Base, TimestampMixin):
+class Admin(Base, TimeStamped):
     id: int
     user_id: int
     channel_id: int
@@ -42,20 +45,28 @@ class Admin(Base, TimestampMixin):
     def __init__(self, id: int, user_id: int, channel_id: int) -> None: ...
     def __repr__(self) -> str: ...
 
-class Quiz(Base, TimestampMixin):
+class Quiz(Base, TimeStamped):
     id: int
     question: str
     correct: int
+    explanation: str | None
+    user_id: int
     channel_id: int
     channel: Channel
     options: list[Option]
 
     def __init__(
-        self, id: int, question: str, correct: int, channel_id: int
+        self,
+        id: int,
+        question: str,
+        correct: int,
+        explanation: str | None,
+        user_id: int,
+        channel_id: int,
     ) -> None: ...
     def __repr__(self) -> str: ...
 
-class Option(Base, TimestampMixin):
+class Option(Base, TimeStamped):
     id: int
     option: str
     order: int

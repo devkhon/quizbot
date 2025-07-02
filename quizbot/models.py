@@ -37,6 +37,9 @@ class User(Base, TimeStamped):
     admins: Mapped[list["Admin"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    quizzes: Mapped[list["Quiz"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return (
@@ -88,10 +91,13 @@ class Quiz(Base, TimeStamped):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     question: Mapped[str] = mapped_column(String(300))
     correct: Mapped[int] = mapped_column(SmallInteger)
+    explanation: Mapped[str | None] = mapped_column(String(200))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     channel_id: Mapped[int] = mapped_column(
         ForeignKey("channels.id", ondelete="CASCADE")
     )
 
+    user: Mapped["User"] = relationship(back_populates="quizzes")
     channel: Mapped["Channel"] = relationship(back_populates="quizzes")
     options: Mapped[list["Option"]] = relationship(
         back_populates="quiz", cascade="all, delete-orphan"
