@@ -19,7 +19,7 @@ class QuizData(TypedDict):
     channel: Channel | None
     question: str | None
     options: list[str] | None
-    correct_index: int | None
+    correct_order: int | None
     explanation: str | None
 
 

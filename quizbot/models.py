@@ -86,7 +86,7 @@ class Quiz(Base, TimeStamped):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     question: Mapped[str] = mapped_column(String(300))
-    correct: Mapped[int] = mapped_column(SmallInteger)
+    correct_order: Mapped[int] = mapped_column(SmallInteger)
     explanation: Mapped[str | None] = mapped_column(String(200))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     channel_id: Mapped[int] = mapped_column(ForeignKey("channels.id"))
@@ -100,7 +100,7 @@ class Quiz(Base, TimeStamped):
     def __repr__(self) -> str:
         return (
             f"Quiz(id={self.id!r}, question={self.question!r}, "
-            f"correct={self.correct!r}, channel_id={self.channel_id!r})"
+            f"correct={self.correct_order!r}, channel_id={self.channel_id!r})"
         )
 
 

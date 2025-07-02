@@ -49,7 +49,7 @@ class Admin(Base, TimeStamped):
 class Quiz(Base, TimeStamped):
     id: int
     question: str
-    correct: int
+    correct_order: int
     explanation: str | None
     user_id: int
     channel_id: int

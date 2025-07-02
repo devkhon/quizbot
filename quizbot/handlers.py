@@ -74,7 +74,7 @@ async def start_quiz_creation(message: Message, state: FSMContext) -> None:
             channel=None,
             question=None,
             options=None,
-            correct_index=None,
+            correct_order=None,
             explanation=None,
         )
         await state.set_data(data)
@@ -190,7 +190,7 @@ async def select_correct_option(message: Message, state: FSMContext) -> None:
         await message.answer(Msg.INVALID_RESPONSE, parse_mode=ParseMode.MARKDOWN_V2)
         return
 
-    await state.update_data(correct_index=data["options"].index(message.text))
+    await state.update_data(correct_order=data["options"].index(message.text))
     await state.set_state(QuizForm.explanation)
     keyboard = create_keyboard(([Btn.SKIP], 1), ([Btn.BACK, Btn.CANCEL], 2))
     await message.answer(
@@ -233,7 +233,7 @@ async def handle_explanation(message: Message, state: FSMContext) -> None:
             options="\n".join(
                 [escape_markdown(f"\t\t- {opt}") for opt in data["options"]]
             ),
-            correct=escape_markdown(data["options"][data["correct_index"]]),
+            correct=escape_markdown(data["options"][data["correct_order"]]),
             explanation=escape_markdown(explanation) if explanation else "",
         ),
         reply_markup=keyboard,

@@ -1,8 +1,8 @@
 """create tables
 
-Revision ID: 7f68b457dc26
+Revision ID: abfc10c38601
 Revises:
-Create Date: 2025-07-02 21:10:41.239543
+Create Date: 2025-07-02 23:43:18.686999
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "7f68b457dc26"
+revision: str = "abfc10c38601"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -88,7 +88,7 @@ def upgrade() -> None:
         "quizzes",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("question", sa.String(length=300), nullable=False),
-        sa.Column("correct", sa.SmallInteger(), nullable=False),
+        sa.Column("correct_order", sa.SmallInteger(), nullable=False),
         sa.Column("explanation", sa.String(length=200), nullable=True),
         sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.Column("channel_id", sa.BigInteger(), nullable=False),

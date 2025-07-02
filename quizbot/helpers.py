@@ -108,7 +108,7 @@ def create_keyboard(*button_groups: tuple[list[str], int]) -> ReplyKeyboardMarku
 async def save_quiz_to_db(session: AsyncSession, data: QuizData) -> Quiz:
     quiz = Quiz(
         question=data["question"],
-        correct=data["correct_index"],
+        correct_order=data["correct_order"],
         explanation=data["explanation"],
         user_id=data["user_id"],
         channel_id=data["channel"].id,
@@ -151,7 +151,7 @@ async def post_channel_quizzes(session: AsyncSession) -> None:
                 channel.id,
                 quiz.question,
                 options,
-                correct_option_id=quiz.correct,
+                correct_option_id=quiz.correct_order,
                 explanation=quiz.explanation,
                 type=PollType.QUIZ,
             )
