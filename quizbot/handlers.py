@@ -1,9 +1,8 @@
 import asyncio
 
-from aiogram import types
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import ReplyKeyboardRemove
+from aiogram.types import ChatMemberUpdated, Message, ReplyKeyboardRemove
 from bot import bot
 from db import AsyncSessionLocal
 from helpers import (
@@ -20,7 +19,7 @@ from messages import Btn, Msg
 from type import QuizData, QuizForm
 
 
-async def handle_bot_join(event: types.ChatMemberUpdated) -> None:
+async def handle_bot_join(event: ChatMemberUpdated) -> None:
     async with AsyncSessionLocal() as session:
         channel = await upsert_channel(session, event.chat)
         await asyncio.sleep(1)
@@ -30,35 +29,35 @@ async def handle_bot_join(event: types.ChatMemberUpdated) -> None:
         await session.commit()
 
 
-async def handle_bot_leave(event: types.ChatMemberUpdated) -> None:
+async def handle_bot_leave(event: ChatMemberUpdated) -> None:
     async with AsyncSessionLocal() as session:
         channel = await upsert_channel(session, event.chat)
         await delete_channel_admins(session, channel.id)
         await session.commit()
 
 
-async def handle_user_promote(event: types.ChatMemberUpdated) -> None:
+async def handle_user_promote(event: ChatMemberUpdated) -> None:
     user = event.new_chat_member.user
     async with AsyncSessionLocal() as session:
         await add_channel_admins(session, event.chat.id, [user])
         await session.commit()
 
 
-async def handle_user_demote(event: types.ChatMemberUpdated) -> None:
+async def handle_user_demote(event: ChatMemberUpdated) -> None:
     user = event.new_chat_member.user
     async with AsyncSessionLocal() as session:
         await delete_channel_admins(session, event.chat.id, [user.id])
         await session.commit()
 
 
-async def handle_start_command(message: types.Message) -> None:
+async def handle_start_command(message: Message) -> None:
     async with AsyncSessionLocal() as session:
         await upsert_user(session, message.from_user)
         await session.commit()
     await message.answer(Msg.START, parse_mode=ParseMode.MARKDOWN_V2)
 
 
-async def start_quiz_creation(message: types.Message, state: FSMContext) -> None:
+async def start_quiz_creation(message: Message, state: FSMContext) -> None:
     async with AsyncSessionLocal() as session:
         channels = await get_user_channels(session, message.from_user)
         if not channels:
@@ -74,7 +73,7 @@ async def start_quiz_creation(message: types.Message, state: FSMContext) -> None
         )
 
 
-async def select_channel(message: types.Message, state: FSMContext) -> None:
+async def select_channel(message: Message, state: FSMContext) -> None:
     data: QuizData = await state.get_data()
     titles = [ch.title for ch in data["channels"]]
     if message.text not in titles:
@@ -90,7 +89,7 @@ async def select_channel(message: types.Message, state: FSMContext) -> None:
     )
 
 
-async def handle_question_input(message: types.Message, state: FSMContext) -> None:
+async def handle_question_input(message: Message, state: FSMContext) -> None:
     if not message.text:
         return
 
@@ -116,7 +115,7 @@ async def handle_question_input(message: types.Message, state: FSMContext) -> No
     )
 
 
-async def handle_option_input(message: types.Message, state: FSMContext) -> None:
+async def handle_option_input(message: Message, state: FSMContext) -> None:
     if not message.text:
         return
 
@@ -162,7 +161,7 @@ async def handle_option_input(message: types.Message, state: FSMContext) -> None
     )
 
 
-async def select_correct_option(message: types.Message, state: FSMContext) -> None:
+async def select_correct_option(message: Message, state: FSMContext) -> None:
     if not message.text:
         return
 
@@ -189,7 +188,7 @@ async def select_correct_option(message: types.Message, state: FSMContext) -> No
     )
 
 
-async def handle_explanation(message: types.Message, state: FSMContext) -> None:
+async def handle_explanation(message: Message, state: FSMContext) -> None:
     if not message.text:
         return
 
@@ -230,7 +229,7 @@ async def handle_explanation(message: types.Message, state: FSMContext) -> None:
     )
 
 
-async def confirm_quiz(message: types.Message, state: FSMContext) -> None:
+async def confirm_quiz(message: Message, state: FSMContext) -> None:
     if not message.text:
         return
 
@@ -269,7 +268,7 @@ async def confirm_quiz(message: types.Message, state: FSMContext) -> None:
     await message.answer(Msg.INVALID_RESPONSE, parse_mode=ParseMode.MARKDOWN_V2)
 
 
-async def cancel_quiz(message: types.Message, state: FSMContext) -> None:
+async def cancel_quiz(message: Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer(
         Msg.CANCELED,

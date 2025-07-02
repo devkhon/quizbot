@@ -1,9 +1,9 @@
 import re
 
-from aiogram import types
 from aiogram.enums.chat_type import ChatType
 from aiogram.filters import BaseFilter
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import Chat, KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.types import User as TUser
 from models import Admin, Channel, Option, Quiz, User
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,11 +15,11 @@ class ChatTypeFilter(BaseFilter):
     def __init__(self, chat_type: ChatType):
         self.chat_type = chat_type
 
-    async def __call__(self, message: types.Message) -> bool:
+    async def __call__(self, message: Message) -> bool:
         return message.chat.type == self.chat_type
 
 
-async def upsert_channel(session: AsyncSession, chat: types.Chat) -> Channel:
+async def upsert_channel(session: AsyncSession, chat: Chat) -> Channel:
     old_channel = await session.get(Channel, chat.id)
     if old_channel:
         old_channel.title = chat.title
@@ -31,7 +31,7 @@ async def upsert_channel(session: AsyncSession, chat: types.Chat) -> Channel:
     return new_channel
 
 
-async def upsert_user(session: AsyncSession, user: types.User) -> User:
+async def upsert_user(session: AsyncSession, user: TUser) -> User:
     old_user = await session.get(User, user.id)
     if old_user:
         old_user.first_name = user.first_name
@@ -51,7 +51,7 @@ async def upsert_user(session: AsyncSession, user: types.User) -> User:
 
 
 async def add_channel_admins(
-    session: AsyncSession, channel_id: int, admin_users: list[types.User]
+    session: AsyncSession, channel_id: int, admin_users: list[TUser]
 ) -> None:
     admins_to_add = []
     for admin_user in admin_users:
@@ -78,7 +78,7 @@ async def delete_channel_admins(
     await session.execute(stmt)
 
 
-async def get_user_channels(session: AsyncSession, user: types.User) -> list[Channel]:
+async def get_user_channels(session: AsyncSession, user: TUser) -> list[Channel]:
     stmt = (
         select(Admin).where(Admin.user_id == user.id).options(joinedload(Admin.channel))
     )
@@ -89,7 +89,7 @@ async def get_user_channels(session: AsyncSession, user: types.User) -> list[Cha
     return channels
 
 
-def create_keyboard(*button_groups: tuple[list[str], int]) -> types.ReplyKeyboardMarkup:
+def create_keyboard(*button_groups: tuple[list[str], int]) -> ReplyKeyboardMarkup:
     keyboard = []
 
     for buttons, columns in button_groups:
