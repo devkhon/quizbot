@@ -15,7 +15,6 @@ class QuizForm(StatesGroup):
 
 class QuizData(TypedDict):
     channels: list[Channel]
-    channel_titles: list[str]
     channel: Channel
     question: str
     options: list[str]

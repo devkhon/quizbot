@@ -1,3 +1,5 @@
+import re
+
 from aiogram import types
 from aiogram.enums.chat_type import ChatType
 from aiogram.filters import BaseFilter
@@ -103,7 +105,7 @@ def create_keyboard(*button_groups: tuple[list[str], int]) -> types.ReplyKeyboar
 async def save_quiz_to_db(session: AsyncSession, data: QuizData) -> Quiz:
     quiz = Quiz(
         question=data["question"],
-        correct=data["correct"],
+        correct=data["correct_index"],
         channel_id=data["channel"].id,
     )
     session.add(quiz)
@@ -115,3 +117,8 @@ async def save_quiz_to_db(session: AsyncSession, data: QuizData) -> Quiz:
     )
 
     return quiz
+
+
+def escape_markdown(text: str) -> str:
+    escape_chars = r"_*[]()~`>#+-=|{}.!\\"
+    return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)

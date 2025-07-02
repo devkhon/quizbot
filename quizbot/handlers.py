@@ -1,6 +1,7 @@
 import asyncio
 
 from aiogram import types
+from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
 from bot import bot
@@ -9,12 +10,13 @@ from helpers import (
     add_channel_admins,
     create_keyboard,
     delete_channel_admins,
+    escape_markdown,
     get_user_channels,
     save_quiz_to_db,
     upsert_channel,
     upsert_user,
 )
-from messages import OPTION_EMOJIS, Btn, Msg
+from messages import Btn, Msg
 from type import QuizData, QuizForm
 
 
@@ -53,34 +55,39 @@ async def handle_start_command(message: types.Message) -> None:
     async with AsyncSessionLocal() as session:
         await upsert_user(session, message.from_user)
         await session.commit()
-    await message.answer(Msg.START)
+    await message.answer(Msg.START, parse_mode=ParseMode.MARKDOWN_V2)
 
 
 async def start_quiz_creation(message: types.Message, state: FSMContext) -> None:
     async with AsyncSessionLocal() as session:
         channels = await get_user_channels(session, message.from_user)
         if not channels:
-            await message.answer(Msg.NO_CHANNELS)
+            await message.answer(Msg.NO_CHANNELS, parse_mode=ParseMode.MARKDOWN_V2)
             return
 
         titles = [ch.title for ch in channels]
-        await state.set_data({"channels": channels, "titles": titles})
+        await state.set_data({"channels": channels})
         await state.set_state(QuizForm.select_channel)
         keyboard = create_keyboard((titles, 2), ([Btn.CANCEL], 1))
-        await message.answer(Msg.PROMPT_CHANNEL, reply_markup=keyboard)
+        await message.answer(
+            Msg.PROMPT_CHANNEL, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+        )
 
 
 async def select_channel(message: types.Message, state: FSMContext) -> None:
     data: QuizData = await state.get_data()
-    if message.text not in data["titles"]:
-        await message.answer(Msg.INVALID_RESPONSE)
+    titles = [ch.title for ch in data["channels"]]
+    if message.text not in titles:
+        await message.answer(Msg.INVALID_RESPONSE, parse_mode=ParseMode.MARKDOWN_V2)
         return
 
-    channel = data["channels"][data["titles"].index(message.text)]
+    channel = data["channels"][titles.index(message.text)]
     await state.update_data(channel=channel)
     await state.set_state(QuizForm.question)
     keyboard = create_keyboard(([Btn.BACK, Btn.CANCEL], 2))
-    await message.answer(Msg.PROMPT_QUESTION, reply_markup=keyboard)
+    await message.answer(
+        Msg.PROMPT_QUESTION, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+    )
 
 
 async def handle_question_input(message: types.Message, state: FSMContext) -> None:
@@ -90,18 +97,23 @@ async def handle_question_input(message: types.Message, state: FSMContext) -> No
     if message.text == Btn.BACK:
         await state.set_state(QuizForm.select_channel)
         data: QuizData = await state.get_data()
-        keyboard = create_keyboard((data["titles"], 2), ([Btn.CANCEL], 1))
-        await message.answer(Msg.PROMPT_CHANNEL, reply_markup=keyboard)
+        titles = [ch.title for ch in data["channels"]]
+        keyboard = create_keyboard((titles, 2), ([Btn.CANCEL], 1))
+        await message.answer(
+            Msg.PROMPT_CHANNEL, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+        )
         return
 
     if len(message.text) > 300:
-        await message.answer(Msg.QUESTION_TOO_LONG)
+        await message.answer(Msg.QUESTION_TOO_LONG, parse_mode=ParseMode.MARKDOWN_V2)
         return
 
     await state.update_data(question=message.text, options=[])
     await state.set_state(QuizForm.collect_options)
     keyboard = create_keyboard(([Btn.BACK, Btn.CANCEL], 2))
-    await message.answer(Msg.PROMPT_OPTION, reply_markup=keyboard)
+    await message.answer(
+        Msg.PROMPT_OPTION, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+    )
 
 
 async def handle_option_input(message: types.Message, state: FSMContext) -> None:
@@ -111,26 +123,32 @@ async def handle_option_input(message: types.Message, state: FSMContext) -> None
     if message.text == Btn.BACK:
         await state.set_state(QuizForm.question)
         keyboard = create_keyboard(([Btn.BACK, Btn.CANCEL], 2))
-        await message.answer(Msg.PROMPT_QUESTION, reply_markup=keyboard)
+        await message.answer(
+            Msg.PROMPT_QUESTION, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+        )
         return
 
     if len(message.text) > 100:
-        await message.answer(Msg.OPTION_TOO_LONG)
+        await message.answer(Msg.OPTION_TOO_LONG, parse_mode=ParseMode.MARKDOWN_V2)
         return
 
     data: QuizData = await state.get_data()
     if message.text == Btn.FINISH:
         if len(data["options"]) < 2:
-            await message.answer(Msg.NEED_TWO_OPTIONS)
+            await message.answer(Msg.NEED_TWO_OPTIONS, parse_mode=ParseMode.MARKDOWN_V2)
             return
 
         await state.set_state(QuizForm.correct_option)
         keyboard = create_keyboard((data["options"], 2), ([Btn.BACK, Btn.CANCEL], 2))
-        await message.answer(Msg.PROMPT_SELECT_CORRECT, reply_markup=keyboard)
+        await message.answer(
+            Msg.PROMPT_SELECT_CORRECT,
+            reply_markup=keyboard,
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
         return
 
     if len(data["options"]) >= 10:
-        await message.answer(Msg.MAX_OPTIONS_REACHED)
+        await message.answer(Msg.MAX_OPTIONS_REACHED, parse_mode=ParseMode.MARKDOWN_V2)
         return
 
     data["options"].append(message.text)
@@ -139,7 +157,9 @@ async def handle_option_input(message: types.Message, state: FSMContext) -> None
         ([Btn.FINISH] if len(data["options"]) >= 2 else [], 1),
         ([Btn.BACK, Btn.CANCEL], 2),
     )
-    await message.answer(Msg.OPTION_ADDED, reply_markup=keyboard)
+    await message.answer(
+        Msg.OPTION_ADDED, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+    )
 
 
 async def select_correct_option(message: types.Message, state: FSMContext) -> None:
@@ -149,19 +169,23 @@ async def select_correct_option(message: types.Message, state: FSMContext) -> No
     if message.text == Btn.BACK:
         await state.set_state(QuizForm.collect_options)
         keyboard = create_keyboard(([Btn.BACK, Btn.CANCEL], 2))
-        await message.answer(Msg.PROMPT_OPTION, reply_markup=keyboard)
+        await message.answer(
+            Msg.PROMPT_OPTION, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+        )
         return
 
     data: QuizData = await state.get_data()
     if message.text not in data["options"]:
-        await message.answer(Msg.INVALID_RESPONSE)
+        await message.answer(Msg.INVALID_RESPONSE, parse_mode=ParseMode.MARKDOWN_V2)
         return
 
     await state.update_data(correct_index=data["options"].index(message.text))
     await state.set_state(QuizForm.explanation)
     keyboard = create_keyboard(([Btn.SKIP], 1), ([Btn.BACK, Btn.CANCEL], 2))
     await message.answer(
-        Msg.PROMPT_EXPLANATION.format(skip_btn=Btn.SKIP), reply_markup=keyboard
+        Msg.PROMPT_EXPLANATION.format(skip_btn=Btn.SKIP),
+        reply_markup=keyboard,
+        parse_mode=ParseMode.MARKDOWN_V2,
     )
 
 
@@ -170,14 +194,18 @@ async def handle_explanation(message: types.Message, state: FSMContext) -> None:
         return
 
     if len(message.text) > 200:
-        await message.answer(Msg.EXPLANATION_TOO_LONG)
+        await message.answer(Msg.EXPLANATION_TOO_LONG, parse_mode=ParseMode.MARKDOWN_V2)
         return
 
     data: QuizData = await state.get_data()
     if message.text == Btn.BACK:
         await state.set_state(QuizForm.correct_option)
         keyboard = create_keyboard((data["options"], 2), ([Btn.BACK, Btn.CANCEL], 2))
-        await message.answer(Msg.PROMPT_SELECT_CORRECT, reply_markup=keyboard)
+        await message.answer(
+            Msg.PROMPT_SELECT_CORRECT,
+            reply_markup=keyboard,
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
         return
 
     explanation = None if message.text == Btn.SKIP else message.text
@@ -189,18 +217,16 @@ async def handle_explanation(message: types.Message, state: FSMContext) -> None:
     )
     await message.answer(
         Msg.PREVIEW.format(
-            channel=data["channel"].title,
-            question=data["question"],
+            channel=escape_markdown(data["channel"].title),
+            question=escape_markdown(data["question"]),
             options="\n".join(
-                [
-                    f"\t\t{OPTION_EMOJIS[i + 1]} {opt}"
-                    for i, opt in enumerate(data["options"])
-                ]
+                [escape_markdown(f"\t\t- {opt}") for opt in data["options"]]
             ),
-            correct=data["options"][data["correct_index"]],
-            explanation=explanation if explanation else "",
+            correct=escape_markdown(data["options"][data["correct_index"]]),
+            explanation=escape_markdown(explanation) if explanation else "",
         ),
         reply_markup=keyboard,
+        parse_mode=ParseMode.MARKDOWN_V2,
     )
 
 
@@ -213,15 +239,18 @@ async def confirm_quiz(message: types.Message, state: FSMContext) -> None:
         await state.set_state(QuizForm.explanation)
         keyboard = create_keyboard(([Btn.SKIP], 1), ([Btn.BACK, Btn.CANCEL], 2))
         await message.answer(
-            Msg.PROMPT_EXPLANATION.format(skip_btn=Btn.SKIP), reply_markup=keyboard
+            Msg.PROMPT_EXPLANATION.format(skip_btn=Btn.SKIP),
+            reply_markup=keyboard,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
     if message.text == Btn.REJECT:
         await state.clear()
         await message.answer(
-            Msg.CANCELED.format(status="disapproved"),
+            Msg.REJECTED,
             reply_markup=ReplyKeyboardRemove(),
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
@@ -230,14 +259,20 @@ async def confirm_quiz(message: types.Message, state: FSMContext) -> None:
             await save_quiz_to_db(session, data)
             await session.commit()
         await state.clear()
-        await message.answer(Msg.SAVED, reply_markup=ReplyKeyboardRemove())
+        await message.answer(
+            Msg.SAVED,
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
         return
 
-    await message.answer(Msg.INVALID_RESPONSE)
+    await message.answer(Msg.INVALID_RESPONSE, parse_mode=ParseMode.MARKDOWN_V2)
 
 
 async def cancel_quiz(message: types.Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer(
-        Msg.CANCELED.format(status="Canceled"), reply_markup=ReplyKeyboardRemove()
+        Msg.CANCELED,
+        reply_markup=ReplyKeyboardRemove(),
+        parse_mode=ParseMode.MARKDOWN_V2,
     )
