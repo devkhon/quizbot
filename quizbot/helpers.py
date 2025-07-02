@@ -19,14 +19,17 @@ class ChatTypeFilter(BaseFilter):
         return message.chat.type == self.chat_type
 
 
-async def upsert_channel(session: AsyncSession, chat: Chat) -> Channel:
+async def upsert_channel(session: AsyncSession, chat: Chat, active: bool) -> Channel:
     old_channel = await session.get(Channel, chat.id)
     if old_channel:
         old_channel.title = chat.title
         old_channel.username = chat.username
+        old_channel.active = active
         return old_channel
 
-    new_channel = Channel(id=chat.id, title=chat.title, username=chat.username)
+    new_channel = Channel(
+        id=chat.id, title=chat.title, username=chat.username, active=active
+    )
     session.add(new_channel)
     return new_channel
 

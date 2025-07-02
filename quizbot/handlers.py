@@ -21,7 +21,7 @@ from type import QuizData, QuizForm
 
 async def handle_bot_join(event: ChatMemberUpdated) -> None:
     async with AsyncSessionLocal() as session:
-        channel = await upsert_channel(session, event.chat)
+        channel = await upsert_channel(session, event.chat, True)
         await asyncio.sleep(1)
         admins = await bot.get_chat_administrators(channel.id)
         admin_users = [admin.user for admin in admins]
@@ -31,7 +31,7 @@ async def handle_bot_join(event: ChatMemberUpdated) -> None:
 
 async def handle_bot_leave(event: ChatMemberUpdated) -> None:
     async with AsyncSessionLocal() as session:
-        channel = await upsert_channel(session, event.chat)
+        channel = await upsert_channel(session, event.chat, False)
         await delete_channel_admins(session, channel.id)
         await session.commit()
 
