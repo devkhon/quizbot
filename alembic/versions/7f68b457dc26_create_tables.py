@@ -1,8 +1,8 @@
 """create tables
 
-Revision ID: 1cc89f2d6e32
+Revision ID: 7f68b457dc26
 Revises:
-Create Date: 2025-06-17 18:38:45.806250
+Create Date: 2025-07-02 21:10:41.239543
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "1cc89f2d6e32"
+revision: str = "7f68b457dc26"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -27,6 +27,7 @@ def upgrade() -> None:
         sa.Column("id", sa.BigInteger(), autoincrement=False, nullable=False),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("username", sa.String(length=32), nullable=True),
+        sa.Column("active", sa.Boolean(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -88,6 +89,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("question", sa.String(length=300), nullable=False),
         sa.Column("correct", sa.SmallInteger(), nullable=False),
+        sa.Column("explanation", sa.String(length=200), nullable=True),
+        sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.Column("channel_id", sa.BigInteger(), nullable=False),
         sa.Column(
             "created_at",
@@ -101,7 +104,14 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(["channel_id"], ["channels.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["channel_id"],
+            ["channels.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["users.id"],
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(

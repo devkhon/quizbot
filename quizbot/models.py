@@ -52,7 +52,7 @@ class Channel(Base, TimeStamped):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     title: Mapped[str] = mapped_column(String(255))
     username: Mapped[str | None] = mapped_column(String(32))
-    active: Mapped[bool] = mapped_column(default=True)
+    active: Mapped[bool]
     admins: Mapped[list["Admin"]] = relationship(
         back_populates="channel", cascade="all, delete-orphan"
     )

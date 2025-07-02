@@ -29,6 +29,7 @@ class Channel(Base, TimeStamped):
     id: int
     title: str
     username: str | None
+    active: bool
     admins: list[Admin]
     quizzes: list[Quiz]
 
