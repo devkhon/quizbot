@@ -1,9 +1,10 @@
 import re
 
-from aiogram.enums import ChatType
+from aiogram.enums import ChatType, PollType
 from aiogram.filters import BaseFilter
 from aiogram.types import BotCommand, Chat, KeyboardButton, Message, ReplyKeyboardMarkup
 from aiogram.types import User as TUser
+from bot import bot
 from models import Admin, Channel, Option, Quiz, User
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -134,3 +135,23 @@ def create_command_menu(commands: list[CommandInfo]) -> list[BotCommand]:
     return [
         BotCommand(command=cmd.command, description=cmd.description) for cmd in commands
     ]
+
+
+async def post_channel_quizzes(session: AsyncSession) -> None:
+    stmt = (
+        select(Channel)
+        .where(Channel.active)
+        .options(joinedload(Channel.quizzes).joinedload(Quiz.options))
+    )
+    channels = (await session.scalars(stmt)).unique().all()
+    for channel in channels:
+        for quiz in channel.quizzes:
+            options = [opt.option for opt in quiz.options]
+            await bot.send_poll(
+                channel.id,
+                quiz.question,
+                options,
+                correct_option_id=quiz.correct,
+                explanation=quiz.explanation,
+                type=PollType.QUIZ,
+            )
