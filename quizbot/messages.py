@@ -6,30 +6,29 @@ class Msg:
 
     NO_CHANNELS = (
         "⚠️ You don\\'t have any channels where I\\'m an admin\\.\n\n"
-        "Please add me as an \\*admin\\* to your channel and try again\\."
+        "Please add me as an *admin* to your channel and try again\\."
     )
 
     PROMPT_CHANNEL = "📢 Select a channel to post your quiz in:"
     PROMPT_QUESTION = "❓What\\'s the quiz question?"
     QUESTION_TOO_LONG = (
-        "❗The question is too long\\. Please limit it to \\*300 characters or fewer\\*"
+        "❗The question is too long\\. Please limit it to *300 characters or fewer*"
     )
 
     PROMPT_OPTION = "✏️ Send me one possible answer:"
     OPTION_TOO_LONG = (
-        "❗The option is too long\\. Please limit it to \\*100 characters or fewer\\*"
+        "❗The option is too long\\. Please limit it to *100 characters or fewer*"
     )
 
-    NEED_TWO_OPTIONS = "⚠️ Add at \\*least 2 options\\* before finishing\\."
-    MAX_OPTIONS_REACHED = "🚫 You\\'ve reached the \\*maximum of 10\\* options\\."
+    NEED_TWO_OPTIONS = "⚠️ Add at *least 2 options* before finishing\\."
+    MAX_OPTIONS_REACHED = "🚫 You\\'ve reached the *maximum of 10* options\\."
     OPTION_ADDED = "✅ Option added\\!\n\nSend another one\\."
     PROMPT_SELECT_CORRECT = "✅ Pick the correct answer from the list below:"
     PROMPT_EXPLANATION = (
         "💬 Send an explanation for this quiz \\(or tap {skip_btn}\\)\\."
     )
     EXPLANATION_TOO_LONG = (
-        "❗The explanation is too long\\. "
-        "Please limit it to \\*200 characters or fewer\\*"
+        "❗The explanation is too long\\. Please limit it to *200 characters or fewer*"
     )
 
     PREVIEW = (

@@ -58,6 +58,9 @@ async def handle_start_command(message: Message) -> None:
 
 
 async def start_quiz_creation(message: Message, state: FSMContext) -> None:
+    if not message.from_user:
+        return
+
     async with AsyncSessionLocal() as session:
         channels = await get_user_channels(session, message.from_user)
         if not channels:
@@ -65,7 +68,16 @@ async def start_quiz_creation(message: Message, state: FSMContext) -> None:
             return
 
         titles = [ch.title for ch in channels]
-        await state.set_data({"channels": channels})
+        data: QuizData = QuizData(
+            channels=channels,
+            user_id=message.from_user.id,
+            channel=None,
+            question=None,
+            options=None,
+            correct_index=None,
+            explanation=None,
+        )
+        await state.set_data(data)
         await state.set_state(QuizForm.select_channel)
         keyboard = create_keyboard((titles, 2), ([Btn.CANCEL], 1))
         await message.answer(

@@ -91,7 +91,6 @@ async def get_user_channels(session: AsyncSession, user: TUser) -> list[Channel]
 
 def create_keyboard(*button_groups: tuple[list[str], int]) -> ReplyKeyboardMarkup:
     keyboard = []
-
     for buttons, columns in button_groups:
         rows = [
             [KeyboardButton(text=btn) for btn in buttons[i : i + columns]]
@@ -106,14 +105,18 @@ async def save_quiz_to_db(session: AsyncSession, data: QuizData) -> Quiz:
     quiz = Quiz(
         question=data["question"],
         correct=data["correct_index"],
+        explanation=data["explanation"],
+        user_id=data["user_id"],
         channel_id=data["channel"].id,
     )
     session.add(quiz)
     await session.flush()
 
-    options = data["options"]
     session.add_all(
-        [Option(option=op, order=i, quiz_id=quiz.id) for i, op in enumerate(options)]
+        [
+            Option(option=op, order=i, quiz_id=quiz.id)
+            for i, op in enumerate(data["options"])
+        ]
     )
 
     return quiz

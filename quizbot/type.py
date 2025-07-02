@@ -15,10 +15,11 @@ class QuizForm(StatesGroup):
 
 class QuizData(TypedDict):
     channels: list[Channel]
-    channel: Channel
-    question: str
-    options: list[str]
-    correct_index: int
+    user_id: int
+    channel: Channel | None
+    question: str | None
+    options: list[str] | None
+    correct_index: int | None
     explanation: str | None
 
 
