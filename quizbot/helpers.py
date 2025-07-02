@@ -1,14 +1,14 @@
 import re
 
-from aiogram.enums.chat_type import ChatType
+from aiogram.enums import ChatType
 from aiogram.filters import BaseFilter
-from aiogram.types import Chat, KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.types import BotCommand, Chat, KeyboardButton, Message, ReplyKeyboardMarkup
 from aiogram.types import User as TUser
 from models import Admin, Channel, Option, Quiz, User
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from type import QuizData
+from type import CommandInfo, QuizData
 
 
 class ChatTypeFilter(BaseFilter):
@@ -122,3 +122,9 @@ async def save_quiz_to_db(session: AsyncSession, data: QuizData) -> Quiz:
 def escape_markdown(text: str) -> str:
     escape_chars = r"_*[]()~`>#+-=|{}.!\\"
     return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)
+
+
+def create_command_menu(commands: list[CommandInfo]) -> list[BotCommand]:
+    return [
+        BotCommand(command=cmd.command, description=cmd.description) for cmd in commands
+    ]

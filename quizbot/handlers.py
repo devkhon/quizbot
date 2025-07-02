@@ -1,6 +1,6 @@
 import asyncio
 
-from aiogram.enums.parse_mode import ParseMode
+from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ChatMemberUpdated, Message, ReplyKeyboardRemove
 from bot import bot

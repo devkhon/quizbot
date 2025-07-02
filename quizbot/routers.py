@@ -1,5 +1,5 @@
 from aiogram import Dispatcher, F, Router
-from aiogram.enums.chat_type import ChatType
+from aiogram.enums import ChatType
 from aiogram.filters import ChatMemberUpdatedFilter, Command, CommandStart, StateFilter
 from constants import PROMOTED
 from handlers import (

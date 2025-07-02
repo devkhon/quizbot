@@ -20,3 +20,8 @@ class QuizData(TypedDict):
     options: list[str]
     correct_index: int
     explanation: str | None
+
+
+class CommandInfo(TypedDict):
+    command: str
+    description: str

@@ -1,10 +1,11 @@
 import asyncio
 
-from bot import bot
+from bot import bot, set_command_menus
 from routers import dp
 
 
-def on_start() -> None:
+async def on_start() -> None:
+    await set_command_menus()
     print("bot has been started....")
 
 
