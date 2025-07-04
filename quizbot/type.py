@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import TypedDict
 
 from aiogram.fsm.state import State, StatesGroup
@@ -29,6 +30,19 @@ class SettingsForm(StatesGroup):
     enter_time = State()
     enter_quiz_count = State()
     confirm = State()
+
+
+class SettingsConfirmType(str, Enum):
+    TIME = "time"
+    QUIZZES = "quizzes"
+
+
+class SettingsData(TypedDict):
+    channels: list[Channel]
+    channel: Channel | None
+    pending_time: str | None
+    pending_quiz_count: int | None
+    confirm_type: SettingsConfirmType | None
 
 
 class CommandInfo(TypedDict):

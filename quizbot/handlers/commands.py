@@ -3,11 +3,10 @@ from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from db import AsyncSessionLocal
+from handlers.quizzes_fsm import router as addquiz_cmd_router
+from handlers.settings_fsm import router as settings_cmd_router
 from helpers import upsert_user
 from messages import Msg
-
-from .quizzes_fsm import router as addquiz_cmd_router
-from .settings_fsm import router as settings_cmd_router
 
 router = Router()
 router.include_router(addquiz_cmd_router)
