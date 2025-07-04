@@ -23,6 +23,14 @@ class QuizData(TypedDict):
     explanation: str | None
 
 
+class SettingsForm(StatesGroup):
+    select_channel = State()
+    sleect_action = State()
+    enter_time = State()
+    enter_quiz_count = State()
+    confirm = State()
+
+
 class CommandInfo(TypedDict):
     command: str
     description: str

@@ -45,6 +45,17 @@ class Msg:
     REJECTED = "🗑️ Quiz creation rejected\\."
     CANCELED = "🚫 Quiz creation canceled\\."
     INVALID_RESPONSE = "❗Invalid response\\. Please use one of the provided buttons\\."
+    PROMPT_SETTINGS_ACTION = "⚙️ Choose what to configure:"
+    ENTER_TIME = "⏰ Enter time in *HH:MM* format:"
+    ENTER_QUIZ_COUNT = "🔢 Enter number of quizzes to send:"
+    CONFIRM_TIME = "❓ Set time to *{time}*?"
+    CONFIRM_QUIZ_COUNT = "❓ Set quiz count to *{count}*?"
+    INVALID_TIME_FORMAT = "❗ Invalid format\\. Use *HH:MM*"
+    INVALID_QUIZ_COUNT = "❗ Please enter a *positive number*"
+    REENTER_TIME = "🔁 Re\\-enter time:"
+    REENTER_QUIZ_COUNT = "🔁 Re\\-enter quiz count:"
+    REJECTED_SETTINGS = "🗑️ Settings rejected\\. Choose again:"
+    SAVED_SETTINGS = "✅ Settings saved\\! Choose next action:"
 
 
 class Btn:
@@ -54,3 +65,5 @@ class Btn:
     SKIP = "⏭️ Skip"
     APPROVE = "✅ Approve"
     REJECT = "🗑️ Rejected"
+    TIME = "🕒 Time"
+    QUIZZES = "📚 Quizzes"
