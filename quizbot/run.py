@@ -3,8 +3,8 @@ import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot import bot, set_command_menus
 from db import AsyncSessionLocal
+from dispatcher import dp
 from helpers import post_channel_quizzes
-from routers import dp
 
 
 async def post_channel_quizzes_job() -> None:

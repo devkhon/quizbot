@@ -1,61 +1,14 @@
-import asyncio
-from datetime import datetime
-
+from aiogram import F, Router
 from aiogram.enums import ParseMode
+from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import ChatMemberUpdated, Message, ReplyKeyboardRemove
-from bot import bot
+from aiogram.types import Message, ReplyKeyboardRemove
 from db import AsyncSessionLocal
-from helpers import (
-    add_channel_admins,
-    create_keyboard,
-    delete_channel_admins,
-    escape_markdown,
-    get_user_channels,
-    save_quiz_to_db,
-    upsert_channel,
-    upsert_user,
-)
+from helpers import create_keyboard, escape_markdown, get_user_channels, save_quiz_to_db
 from messages import Btn, Msg
-from type import QuizData, QuizForm, SettingsForm
+from type import QuizData, QuizForm
 
-
-async def handle_bot_join(event: ChatMemberUpdated) -> None:
-    async with AsyncSessionLocal() as session:
-        channel = await upsert_channel(session, event.chat, True)
-        await asyncio.sleep(1)
-        admins = await bot.get_chat_administrators(channel.id)
-        admin_users = [admin.user for admin in admins]
-        await add_channel_admins(session, channel.id, admin_users)
-        await session.commit()
-
-
-async def handle_bot_leave(event: ChatMemberUpdated) -> None:
-    async with AsyncSessionLocal() as session:
-        channel = await upsert_channel(session, event.chat, False)
-        await delete_channel_admins(session, channel.id)
-        await session.commit()
-
-
-async def handle_user_promote(event: ChatMemberUpdated) -> None:
-    user = event.new_chat_member.user
-    async with AsyncSessionLocal() as session:
-        await add_channel_admins(session, event.chat.id, [user])
-        await session.commit()
-
-
-async def handle_user_demote(event: ChatMemberUpdated) -> None:
-    user = event.new_chat_member.user
-    async with AsyncSessionLocal() as session:
-        await delete_channel_admins(session, event.chat.id, [user.id])
-        await session.commit()
-
-
-async def handle_start_command(message: Message) -> None:
-    async with AsyncSessionLocal() as session:
-        await upsert_user(session, message.from_user)
-        await session.commit()
-    await message.answer(Msg.START, parse_mode=ParseMode.MARKDOWN_V2)
+router = Router()
 
 
 async def start_quiz_creation(message: Message, state: FSMContext) -> None:
@@ -290,139 +243,13 @@ async def cancel_quiz(message: Message, state: FSMContext) -> None:
     )
 
 
-async def start_settings(message: Message, state: FSMContext) -> None:
-    if not message.from_user:
-        return
+quiz_state_filter = StateFilter(*QuizForm.__all_states__)
 
-    async with AsyncSessionLocal() as session:
-        channels = await get_user_channels(session, message.from_user)
-
-    if not channels:
-        await message.answer(Msg.NO_CHANNELS, parse_mode=ParseMode.MARKDOWN_V2)
-        return
-
-    titles = [ch.title for ch in channels]
-    await state.set_state(SettingsForm.select_channel)
-    await state.set_data({"channels": channels})
-    keyboard = create_keyboard((titles, 2), ([Btn.CANCEL], 1))
-    await message.answer(
-        Msg.PROMPT_CHANNEL, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
-    )
-
-
-async def handle_select_channel(message: Message, state: FSMContext) -> None:
-    data = await state.get_data()
-    titles = [ch.title for ch in data["channels"]]
-
-    if message.text == Btn.CANCEL:
-        await state.clear()
-        await message.answer(
-            Msg.CANCELED,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-        return
-
-    if message.text not in titles:
-        await message.answer(Msg.INVALID_RESPONSE, parse_mode=ParseMode.MARKDOWN_V2)
-        return
-
-    selected = data["channels"][titles.index(message.text)]
-    await state.update_data(channel=selected)
-    await state.set_state(SettingsForm.sleect_action)
-    keyboard = create_keyboard(
-        ([Btn.TIME, Btn.QUIZZES], 2), ([Btn.BACK, Btn.CANCEL], 2)
-    )
-    await message.answer(Msg.PROMPT_SETTINGS_ACTION, reply_markup=keyboard)
-
-
-async def handle_select_action(message: Message, state: FSMContext) -> None:
-    if message.text == Btn.CANCEL:
-        await state.clear()
-        await message.answer(Msg.CANCELED, reply_markup=ReplyKeyboardRemove())
-        return
-
-    if message.text == Btn.BACK:
-        data = await state.get_data()
-        titles = [ch.title for ch in data["channels"]]
-        keyboard = create_keyboard((titles, 2), ([Btn.CANCEL], 1))
-        await state.set_state(SettingsForm.select_channel)
-        await message.answer(Msg.PROMPT_CHANNEL, reply_markup=keyboard)
-        return
-
-    if message.text == Btn.TIME:
-        await state.set_state(SettingsForm.enter_time)
-        await message.answer(Msg.ENTER_TIME)
-    elif message.text == Btn.QUIZZES:
-        await state.set_data(SettingsForm.enter_quiz_count)
-        await message.answer(Msg.ENTER_QUIZ_COUNT)
-    else:
-        await message.answer(Msg.INVALID_RESPONSE)
-
-
-async def handle_enter_time(message: Message, state: FSMContext) -> None:
-    if not message.text:
-        return
-
-    try:
-        datetime.strptime(message.text, "%H:%M")
-        await state.update_data(penting_time=message.text, confirm_type="time")
-        await state.set_state(SettingsForm.confirm)
-        keyboard = create_keyboard(
-            ([Btn.APPROVE, Btn.REJECT], 2), ([Btn.BACK, Btn.CANCEL], 2)
-        )
-        await message.answer(
-            Msg.CONFIRM_TIME.format(time=message.text), reply_markup=keyboard
-        )
-    except ValueError:
-        await message.answer(Msg.INVALID_TIME_FORMAT)
-
-
-async def handle_enter_quiz_count(message: Message, state: FSMContext) -> None:
-    if not message.text:
-        return
-
-    if message.text.isdigit() and int(message.text) > 0:
-        await state.update_data(
-            pending_quiz_count=int(message.text), confirm_type="quizzes"
-        )
-        await state.set_state(SettingsForm.confirm)
-        keyboard = create_keyboard(
-            ([Btn.APPROVE, Btn.REJECT], 2), ([Btn.BACK, Btn.CANCEL], 2)
-        )
-        await message.answer(
-            Msg.CONFIRM_QUIZ_COUNT.format(count=message.text), reply_markup=keyboard
-        )
-    else:
-        await message.answer(Msg.INVALID_QUIZ_COUNT)
-
-
-async def handle_confirm(message: Message, state: FSMContext) -> None:
-    data = await state.get_data()
-
-    if message.text == Btn.CANCEL:
-        await state.clear()
-        await message.answer(Msg.CANCELED, reply_markup=ReplyKeyboardRemove())
-        return
-
-    if message.text == Btn.BACK:
-        if data["confirm_type"] == "time":
-            await state.set_state(SettingsForm.enter_time)
-            await message.answer(Msg.REENTER_TIME)
-        else:
-            await state.set_state(SettingsForm.enter_quiz_count)
-            await message.answer(Msg.REENTER_QUIZ_COUNT)
-        return
-
-    if message.text == Btn.REJECT:
-        await state.clear()
-        await message.answer(Msg.REJECTED_SETTINGS, reply_markup=ReplyKeyboardRemove())
-        return
-
-    if message.text == Btn.APPROVE:
-        # Save db logic
-        await state.clear()
-        await message.answer(Msg.SAVED_SETTINGS, reply_markup=ReplyKeyboardRemove())
-        return
-
-    await message.answer(Msg.INVALID_RESPONSE)
+router.message.register(start_quiz_creation, Command("addquiz"))
+router.message.register(cancel_quiz, quiz_state_filter, F.text == Btn.CANCEL)
+router.message.register(select_channel, QuizForm.select_channel)
+router.message.register(handle_question_input, QuizForm.question)
+router.message.register(handle_option_input, QuizForm.collect_options)
+router.message.register(select_correct_option, QuizForm.correct_option)
+router.message.register(handle_explanation, QuizForm.explanation)
+router.message.register(confirm_quiz, QuizForm.confirmation)
