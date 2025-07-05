@@ -5,10 +5,10 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
-from db import AsyncSessionLocal
+from db import AsyncSessionLocal, redis
 from helpers import create_keyboard, get_user_channels
 from messages import Btn, Msg
-from type import SettingsConfirmType, SettingsData, SettingsForm
+from type import ChannelSettings, SettingsConfirmType, SettingsData, SettingsForm
 
 router = Router()
 
@@ -104,16 +104,17 @@ async def handle_enter_time(message: Message, state: FSMContext) -> None:
         return
 
     try:
-        datetime.strptime(message.text, "%H:%M")
+        dt = datetime.strptime(message.text, "%H:%M")
+        normalized = dt.strftime("%H:%M")
         await state.update_data(
-            penting_time=message.text, confirm_type=SettingsConfirmType.TIME
+            pending_time=normalized, confirm_type=SettingsConfirmType.TIME
         )
         await state.set_state(SettingsForm.confirm)
         keyboard = create_keyboard(
             ([Btn.APPROVE, Btn.REJECT], 2), ([Btn.BACK, Btn.CANCEL], 2)
         )
         await message.answer(
-            Msg.CONFIRM_TIME.format(time=message.text),
+            Msg.CONFIRM_TIME.format(time=normalized),
             reply_markup=keyboard,
             parse_mode=ParseMode.MARKDOWN_V2,
         )
@@ -184,7 +185,13 @@ async def handle_confirm(message: Message, state: FSMContext) -> None:
         return
 
     if message.text == Btn.APPROVE:
-        # Save db logic
+        settings: ChannelSettings = {}
+        if data["pending_time"]:
+            settings["time"] = data["pending_time"]
+        if data["pending_quiz_count"]:
+            settings["quiz_count"] = data["pending_quiz_count"]
+
+        await redis.hset(data["channel"].id, mapping=settings)
         await state.clear()
         await message.answer(Msg.SAVED_SETTINGS, reply_markup=ReplyKeyboardRemove())
         return

@@ -45,6 +45,11 @@ class SettingsData(TypedDict):
     confirm_type: SettingsConfirmType | None
 
 
+class ChannelSettings(TypedDict):
+    time: str | None
+    quiz_count: int | None
+
+
 class CommandInfo(TypedDict):
     command: str
     description: str
