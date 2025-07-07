@@ -1,10 +1,13 @@
+import random
 import re
+from collections.abc import Sequence
 
 from aiogram.enums import ChatType, PollType
 from aiogram.filters import BaseFilter
 from aiogram.types import BotCommand, Chat, KeyboardButton, Message, ReplyKeyboardMarkup
 from aiogram.types import User as TUser
 from bot import bot
+from db import redis
 from models import Admin, Channel, Option, Quiz, User
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -137,21 +140,43 @@ def create_command_menu(commands: list[CommandInfo]) -> list[BotCommand]:
     ]
 
 
-async def post_channel_quizzes(session: AsyncSession) -> None:
+async def send_quiz(quiz: Quiz) -> None:
+    await bot.send_poll(
+        quiz.channel_id,
+        quiz.question,
+        quiz.options,
+        correct_option_id=quiz.correct_order,
+        explanation=quiz.explanation,
+        type=PollType.QUIZ,
+    )
+
+
+async def get_rand_channel_quizzes(
+    session: AsyncSession, channel_id: int, n: int
+) -> list[Quiz] | None:
     stmt = (
         select(Channel)
-        .where(Channel.active)
-        .options(joinedload(Channel.quizzes).joinedload(Quiz.options))
+        .where(Channel.id == channel_id)
+        .options(joinedload(Channel.quizzes))
     )
-    channels = (await session.scalars(stmt)).unique().all()
-    for channel in channels:
-        for quiz in channel.quizzes:
-            options = [opt.option for opt in quiz.options]
-            await bot.send_poll(
-                channel.id,
-                quiz.question,
-                options,
-                correct_option_id=quiz.correct_order,
-                explanation=quiz.explanation,
-                type=PollType.QUIZ,
-            )
+    channel = await session.scalar(stmt)
+
+    if not channel:
+        return None
+
+    return random.sample(channel.quizzes, min(n, len(channel.quizzes)))
+
+
+async def send_channel_quizzes(session: AsyncSession, channel_id: int, n: int) -> None:
+    quizzes = await get_rand_channel_quizzes(session, channel_id, n)
+    if not quizzes:
+        return
+
+    for quiz in quizzes:
+        await send_quiz(quiz)
+
+
+async def get_all_active_channels(session: AsyncSession) -> Sequence[Channel]:
+    stmt = select(Channel).where(Channel.active)
+    channels = (await session.scalars(stmt)).all()
+    return channels
