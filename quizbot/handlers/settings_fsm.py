@@ -26,7 +26,7 @@ async def start_settings(message: Message, state: FSMContext) -> None:
 
     titles = [ch.title for ch in channels]
     await state.set_state(SettingsForm.select_channel)
-    data: SettingsData = SettingsData(
+    data = SettingsData(
         channels=channels,
         channel=None,
         pending_time=None,
@@ -54,7 +54,11 @@ async def handle_select_channel(message: Message, state: FSMContext) -> None:
     keyboard = create_keyboard(
         ([Btn.TIME, Btn.QUIZZES], 2), ([Btn.BACK, Btn.CANCEL], 2)
     )
-    await message.answer(Msg.PROMPT_SETTINGS_ACTION, reply_markup=keyboard)
+    await message.answer(
+        Msg.PROMPT_SETTINGS_ACTION,
+        reply_markup=keyboard,
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
 
 
 async def handle_select_action(message: Message, state: FSMContext) -> None:
@@ -63,7 +67,9 @@ async def handle_select_action(message: Message, state: FSMContext) -> None:
         titles = [ch.title for ch in data["channels"]]
         keyboard = create_keyboard((titles, 2), ([Btn.CANCEL], 1))
         await state.set_state(SettingsForm.select_channel)
-        await message.answer(Msg.PROMPT_CHANNEL, reply_markup=keyboard)
+        await message.answer(
+            Msg.PROMPT_CHANNEL, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+        )
         return
 
     if message.text == Btn.TIME:
@@ -181,7 +187,11 @@ async def handle_confirm(message: Message, state: FSMContext) -> None:
 
     if message.text == Btn.REJECT:
         await state.clear()
-        await message.answer(Msg.REJECTED_SETTINGS, reply_markup=ReplyKeyboardRemove())
+        await message.answer(
+            Msg.REJECTED_SETTINGS,
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
         return
 
     if message.text == Btn.APPROVE:
@@ -189,11 +199,15 @@ async def handle_confirm(message: Message, state: FSMContext) -> None:
         if data["pending_time"]:
             settings["time"] = data["pending_time"]
         if data["pending_quiz_count"]:
-            settings["quiz_count"] = data["pending_quiz_count"]
+            settings["quiz_count"] = str(data["pending_quiz_count"])
 
         await redis.hset(data["channel"].id, mapping=settings)
         await state.clear()
-        await message.answer(Msg.SAVED_SETTINGS, reply_markup=ReplyKeyboardRemove())
+        await message.answer(
+            Msg.SAVED_SETTINGS,
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
         return
 
     await message.answer(Msg.INVALID_RESPONSE, parse_mode=ParseMode.MARKDOWN_V2)

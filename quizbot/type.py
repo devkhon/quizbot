@@ -47,7 +47,7 @@ class SettingsData(TypedDict):
 
 class ChannelSettings(TypedDict):
     time: str | None
-    quiz_count: int | None
+    quiz_count: str | None
 
 
 class CommandInfo(TypedDict):
