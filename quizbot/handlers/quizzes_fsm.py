@@ -4,11 +4,34 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
 from db import AsyncSessionLocal
-from helpers import create_keyboard, escape_markdown, get_user_channels, save_quiz_to_db
+from helpers import create_keyboard, escape_markdown, get_user_channels
 from messages import Btn, Msg
+from models import Option, Quiz
+from sqlalchemy.ext.asyncio import AsyncSession
 from type import QuizData, QuizForm
 
 router = Router()
+
+
+async def save_quiz_to_db(session: AsyncSession, data: QuizData) -> Quiz:
+    quiz = Quiz(
+        question=data["question"],
+        correct_order=data["correct_order"],
+        explanation=data["explanation"],
+        user_id=data["user_id"],
+        channel_id=data["channel"].id,
+    )
+    session.add(quiz)
+    await session.flush()
+
+    session.add_all(
+        [
+            Option(option=op, order=i, quiz_id=quiz.id)
+            for i, op in enumerate(data["options"])
+        ]
+    )
+
+    return quiz
 
 
 async def start_quiz_creation(message: Message, state: FSMContext) -> None:

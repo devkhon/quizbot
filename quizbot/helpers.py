@@ -1,91 +1,11 @@
-import random
 import re
-from collections.abc import Sequence
 
-from aiogram.enums import ChatType, PollType
-from aiogram.filters import BaseFilter
-from aiogram.types import BotCommand, Chat, KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.types import User as TUser
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from bot import bot
-from constants import POST_TIME, QUIZ_COUNT
-from db import redis
-from models import Admin, Channel, Option, Quiz, User
-from sqlalchemy import delete, select
+from models import Admin, Channel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from type import ChannelSettings, CommandInfo, QuizData
-
-
-class ChatTypeFilter(BaseFilter):
-    def __init__(self, chat_type: ChatType):
-        self.chat_type = chat_type
-
-    async def __call__(self, message: Message) -> bool:
-        return message.chat.type == self.chat_type
-
-
-async def upsert_channel(session: AsyncSession, chat: Chat, active: bool) -> Channel:
-    old_channel = await session.get(Channel, chat.id)
-    if old_channel:
-        old_channel.title = chat.title
-        old_channel.username = chat.username
-        old_channel.active = active
-        return old_channel
-
-    new_channel = Channel(
-        id=chat.id, title=chat.title, username=chat.username, active=active
-    )
-    session.add(new_channel)
-    return new_channel
-
-
-async def upsert_user(session: AsyncSession, user: TUser) -> User:
-    old_user = await session.get(User, user.id)
-    if old_user:
-        old_user.first_name = user.first_name
-        old_user.last_name = user.last_name
-        old_user.username = user.username
-        return old_user
-
-    new_user = User(
-        id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        username=user.username,
-    )
-
-    session.add(new_user)
-    return new_user
-
-
-async def add_channel_admins(
-    session: AsyncSession, channel_id: int, admin_users: list[TUser]
-) -> None:
-    admins_to_add = []
-    for admin_user in admin_users:
-        if not admin_user.is_bot:
-            user = await upsert_user(session, admin_user)
-            new_admin = Admin(user_id=user.id, channel_id=channel_id)
-            admins_to_add.append(new_admin)
-    session.add_all(admins_to_add)
-
-
-async def delete_channel_admins(
-    session: AsyncSession, channel_id: int, admin_ids: list[int] | None = None
-) -> None:
-    if admin_ids is not None and not admin_ids:
-        return
-
-    if admin_ids:
-        stmt = delete(Admin).where(
-            (Admin.channel_id == channel_id) & (Admin.user_id.in_(admin_ids))
-        )
-    else:
-        stmt = delete(Admin).where(Admin.channel_id == channel_id)
-
-    await session.execute(stmt)
 
 
 async def get_user_channels(session: AsyncSession, user: TUser) -> list[Channel]:
@@ -111,93 +31,6 @@ def create_keyboard(*button_groups: tuple[list[str], int]) -> ReplyKeyboardMarku
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
 
-async def save_quiz_to_db(session: AsyncSession, data: QuizData) -> Quiz:
-    quiz = Quiz(
-        question=data["question"],
-        correct_order=data["correct_order"],
-        explanation=data["explanation"],
-        user_id=data["user_id"],
-        channel_id=data["channel"].id,
-    )
-    session.add(quiz)
-    await session.flush()
-
-    session.add_all(
-        [
-            Option(option=op, order=i, quiz_id=quiz.id)
-            for i, op in enumerate(data["options"])
-        ]
-    )
-
-    return quiz
-
-
 def escape_markdown(text: str) -> str:
     escape_chars = r"_*[]()~`>#+-=|{}.!\\"
     return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)
-
-
-def create_command_menu(commands: list[CommandInfo]) -> list[BotCommand]:
-    return [
-        BotCommand(command=cmd.command, description=cmd.description) for cmd in commands
-    ]
-
-
-async def get_all_active_channels(session: AsyncSession) -> Sequence[Channel]:
-    stmt = select(Channel).where(Channel.active)
-    channels = (await session.scalars(stmt)).all()
-    return channels
-
-
-async def get_rand_channel_quizzes(
-    session: AsyncSession, channel_id: int, n: int
-) -> list[Quiz]:
-    stmt = (
-        select(Quiz)
-        .where(Quiz.channel_id == channel_id)
-        .options(joinedload(Quiz.options))
-    )
-    quizzes = (await session.scalars(stmt)).unique().all()
-
-    return random.sample(quizzes, min(n, len(quizzes)))
-
-
-async def send_channel_quizzes(session: AsyncSession, channel_id: int, n: int) -> None:
-    quizzes = await get_rand_channel_quizzes(session, channel_id, n)
-    for quiz in quizzes:
-        await bot.send_poll(
-            quiz.channel_id,
-            quiz.question,
-            [opt.option for opt in quiz.options],
-            correct_option_id=quiz.correct_order,
-            explanation=quiz.explanation,
-            type=PollType.QUIZ,
-        )
-
-
-async def setup_scheduler(session: AsyncSession, scheduler: AsyncIOScheduler) -> None:
-    channels = await get_all_active_channels(session)
-    for channel in channels:
-        await schedule_channel(session, scheduler, channel.id)
-
-
-async def schedule_channel(
-    sesssion: AsyncSession, scheduler: AsyncIOScheduler, channel_id: int
-) -> None:
-    settings: ChannelSettings = await redis.hgetall(channel_id)
-    post_time = settings.get("time") if settings.get("time") else POST_TIME
-    quiz_count = (
-        int(settings.get("quiz_count")) if settings.get("quiz_count") else QUIZ_COUNT
-    )
-
-    scheduler.add_job(
-        send_channel_quizzes,
-        CronTrigger(
-            hour=post_time[0:2],
-            minute=post_time[3:5],
-            timezone="Asia/Tashkent",
-        ),
-        args=[sesssion, channel_id, quiz_count],
-        id=str(channel_id),
-        replace_existing=True,
-    )

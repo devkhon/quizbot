@@ -1,16 +1,13 @@
 import asyncio
 
 from bot import bot, set_command_menus
-from db import AsyncSessionLocal
 from dispatcher import dp
-from helpers import setup_scheduler
-from scheduler import scheduler
+from scheduler import scheduler, setup_scheduler
 
 
 async def on_start() -> None:
-    async with AsyncSessionLocal() as session:
-        await setup_scheduler(session, scheduler)
     await set_command_menus()
+    await setup_scheduler()
     scheduler.start()
     print("bot has been started....")
 
