@@ -6,8 +6,9 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
 from db import AsyncSessionLocal, redis
-from helpers import create_keyboard, get_user_channels
+from helpers import create_keyboard, get_user_channels, schedule_channel
 from messages import Btn, Msg
+from scheduler import scheduler
 from type import ChannelSettings, SettingsConfirmType, SettingsData, SettingsForm
 
 router = Router()
@@ -202,6 +203,8 @@ async def handle_confirm(message: Message, state: FSMContext) -> None:
             settings["quiz_count"] = str(data["pending_quiz_count"])
 
         await redis.hset(data["channel"].id, mapping=settings)
+        async with AsyncSessionLocal() as session:
+            await schedule_channel(session, scheduler, data["channel"].id)
         await state.clear()
         await message.answer(
             Msg.SAVED_SETTINGS,
