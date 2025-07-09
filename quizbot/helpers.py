@@ -152,8 +152,12 @@ async def get_all_active_channels(session: AsyncSession) -> Sequence[Channel]:
 async def get_rand_channel_quizzes(
     session: AsyncSession, channel_id: int, n: int
 ) -> list[Quiz]:
-    stmt = select(Quiz).where(Quiz.channel_id == channel_id)
-    quizzes = (await session.scalars(stmt)).all()
+    stmt = (
+        select(Quiz)
+        .where(Quiz.channel_id == channel_id)
+        .options(joinedload(Quiz.options))
+    )
+    quizzes = (await session.scalars(stmt)).unique().all()
 
     return random.sample(quizzes, min(n, len(quizzes)))
 
@@ -164,7 +168,7 @@ async def send_channel_quizzes(session: AsyncSession, channel_id: int, n: int) -
         await bot.send_poll(
             quiz.channel_id,
             quiz.question,
-            quiz.options,
+            [opt.option for opt in quiz.options],
             correct_option_id=quiz.correct_order,
             explanation=quiz.explanation,
             type=PollType.QUIZ,
@@ -188,7 +192,11 @@ async def schedule_channel(
 
     scheduler.add_job(
         send_channel_quizzes,
-        CronTrigger(hour=post_time[0:2], minute=post_time[3:5]),
+        CronTrigger(
+            hour=post_time[0:2],
+            minute=post_time[3:5],
+            timezone="Asia/Tashkent",
+        ),
         args=[sesssion, channel_id, quiz_count],
         id=str(channel_id),
         replace_existing=True,
