@@ -1,12 +1,12 @@
 import asyncio
 
-from bot import bot, set_command_menus
+from bot import bot, set_command_menu
 from dispatcher import dp
 from scheduler import scheduler, setup_scheduler
 
 
 async def on_start() -> None:
-    await set_command_menus()
+    await set_command_menu()
     await setup_scheduler()
     scheduler.start()
     print("bot has been started....")

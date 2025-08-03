@@ -18,7 +18,7 @@ commands: list[CommandInfo] = [
 ]
 
 
-async def set_command_menus() -> None:
+async def set_command_menu() -> None:
     await bot.set_my_commands(commands, BotCommandScopeAllPrivateChats())
 
 
