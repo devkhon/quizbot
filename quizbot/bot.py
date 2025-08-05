@@ -15,6 +15,7 @@ bot = Bot(settings.bot_token)
 commands: list[CommandInfo] = [
     CommandInfo(command="start", description="start command"),
     CommandInfo(command="addquiz", description="addquiz command"),
+    CommandInfo(command="settings", description="settings command"),
 ]
 
 
