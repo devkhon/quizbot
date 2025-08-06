@@ -1,0 +1,232 @@
+# Russian translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-08-06 09:27+0500\n"
+"PO-Revision-Date: 2025-08-06 09:40+0500\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ru\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: quizbot/handlers/commands.py:46
+msgid ""
+"👋 Hello\\! I\\'m here to help you create quizzes for your channels\\. Use"
+" /addquiz to begin\\."
+msgstr "👋 Привет\\! Я помогу вам создать викторины для ваших каналов\\. Используйте /addquiz, чтобы начать\\."
+
+#: quizbot/handlers/quizzes_fsm.py:46 quizbot/handlers/settings_fsm.py:27
+msgid ""
+"⚠️ You don\\'t have any channels where I\\'m an admin\\.\n"
+"\n"
+"Please add me as an *admin* to your channel and try again\\."
+msgstr "⚠️ У вас нет каналов, где я являюсь администратором\\.\n\nПожалуйста, добавьте меня как *администратора* в ваш канал и попробуйте снова\\."
+
+#: quizbot/handlers/quizzes_fsm.py:65 quizbot/handlers/quizzes_fsm.py:86
+#: quizbot/handlers/quizzes_fsm.py:102 quizbot/handlers/quizzes_fsm.py:121
+#: quizbot/handlers/quizzes_fsm.py:135 quizbot/handlers/quizzes_fsm.py:163
+#: quizbot/handlers/quizzes_fsm.py:183 quizbot/handlers/quizzes_fsm.py:198
+#: quizbot/handlers/quizzes_fsm.py:216 quizbot/handlers/quizzes_fsm.py:243
+#: quizbot/handlers/quizzes_fsm.py:257 quizbot/handlers/quizzes_fsm.py:290
+#: quizbot/handlers/quizzes_fsm.py:340 quizbot/handlers/settings_fsm.py:44
+#: quizbot/handlers/settings_fsm.py:67 quizbot/handlers/settings_fsm.py:80
+#: quizbot/handlers/settings_fsm.py:91 quizbot/handlers/settings_fsm.py:101
+#: quizbot/handlers/settings_fsm.py:122 quizbot/handlers/settings_fsm.py:139
+#: quizbot/handlers/settings_fsm.py:159 quizbot/handlers/settings_fsm.py:175
+#: quizbot/handlers/settings_fsm.py:193 quizbot/handlers/settings_fsm.py:255
+msgid "❌ Cancel"
+msgstr "❌ Отмена"
+
+#: quizbot/handlers/quizzes_fsm.py:67 quizbot/handlers/quizzes_fsm.py:104
+#: quizbot/handlers/settings_fsm.py:46 quizbot/handlers/settings_fsm.py:83
+msgid "📢 Select a channel to post your quiz in:"
+msgstr "📢 Выберите канал для публикации викторины:"
+
+#: quizbot/handlers/quizzes_fsm.py:86 quizbot/handlers/quizzes_fsm.py:98
+#: quizbot/handlers/quizzes_fsm.py:121 quizbot/handlers/quizzes_fsm.py:133
+#: quizbot/handlers/quizzes_fsm.py:135 quizbot/handlers/quizzes_fsm.py:163
+#: quizbot/handlers/quizzes_fsm.py:183 quizbot/handlers/quizzes_fsm.py:196
+#: quizbot/handlers/quizzes_fsm.py:198 quizbot/handlers/quizzes_fsm.py:216
+#: quizbot/handlers/quizzes_fsm.py:240 quizbot/handlers/quizzes_fsm.py:243
+#: quizbot/handlers/quizzes_fsm.py:257 quizbot/handlers/quizzes_fsm.py:287
+#: quizbot/handlers/quizzes_fsm.py:290 quizbot/handlers/settings_fsm.py:67
+#: quizbot/handlers/settings_fsm.py:77 quizbot/handlers/settings_fsm.py:91
+#: quizbot/handlers/settings_fsm.py:101 quizbot/handlers/settings_fsm.py:119
+#: quizbot/handlers/settings_fsm.py:122 quizbot/handlers/settings_fsm.py:139
+#: quizbot/handlers/settings_fsm.py:156 quizbot/handlers/settings_fsm.py:159
+#: quizbot/handlers/settings_fsm.py:175 quizbot/handlers/settings_fsm.py:192
+#: quizbot/handlers/settings_fsm.py:193
+msgid "↩️ Back"
+msgstr "↩️ Назад"
+
+#: quizbot/handlers/quizzes_fsm.py:88 quizbot/handlers/quizzes_fsm.py:137
+msgid "❓What\\'s the quiz question?"
+msgstr "❓Какой вопрос викторины?"
+
+#: quizbot/handlers/quizzes_fsm.py:113
+msgid "❗The question is too long\\. Please limit it to *300 characters or fewer*"
+msgstr "❗Вопрос слишком длинный\\. Пожалуйста, ограничьтесь *300 символами или меньше*"
+
+#: quizbot/handlers/quizzes_fsm.py:123 quizbot/handlers/quizzes_fsm.py:200
+msgid "✏️ Send me one possible answer:"
+msgstr "✏️ Отправьте один из вариантов ответа:"
+
+#: quizbot/handlers/quizzes_fsm.py:146
+msgid "❗The option is too long\\. Please limit it to *100 characters or fewer*"
+msgstr "❗Вариант слишком длинный\\. Пожалуйста, ограничьтесь *100 символами или меньше*"
+
+#: quizbot/handlers/quizzes_fsm.py:153 quizbot/handlers/quizzes_fsm.py:182
+msgid "🎯 Done"
+msgstr "🎯 Готово"
+
+#: quizbot/handlers/quizzes_fsm.py:156
+msgid "⚠️ Add at *least 2 options* before finishing\\."
+msgstr "⚠️ Добавьте *как минимум 2 варианта*, прежде чем завершить\\."
+
+#: quizbot/handlers/quizzes_fsm.py:166 quizbot/handlers/quizzes_fsm.py:246
+msgid "✅ Pick the correct answer from the list below:"
+msgstr "✅ Выберите правильный ответ из списка ниже:"
+
+#: quizbot/handlers/quizzes_fsm.py:174
+msgid "🚫 You\\'ve reached the *maximum of 10* options\\."
+msgstr "🚫 Вы достигли *максимума в 10* вариантов\\."
+
+#: quizbot/handlers/quizzes_fsm.py:186
+msgid ""
+"✅ Option added\\!\n"
+"\n"
+"Send another one\\."
+msgstr "✅ Вариант добавлен\\!\n\nОтправьте ещё один\\."
+
+#: quizbot/handlers/quizzes_fsm.py:209 quizbot/handlers/quizzes_fsm.py:323
+#: quizbot/handlers/settings_fsm.py:58 quizbot/handlers/settings_fsm.py:110
+#: quizbot/handlers/settings_fsm.py:238
+msgid "❗Invalid response\\. Please use one of the provided buttons\\."
+msgstr "❗Неверный ответ\\. Пожалуйста, используйте одну из предложенных кнопок\\."
+
+#: quizbot/handlers/quizzes_fsm.py:216 quizbot/handlers/quizzes_fsm.py:219
+#: quizbot/handlers/quizzes_fsm.py:252 quizbot/handlers/quizzes_fsm.py:290
+#: quizbot/handlers/quizzes_fsm.py:294
+msgid "⏭️ Skip"
+msgstr "⏭️ Пропустить"
+
+#: quizbot/handlers/quizzes_fsm.py:218 quizbot/handlers/quizzes_fsm.py:293
+#, python-brace-format
+msgid "💬 Send an explanation for this quiz \\(or tap {skip_btn}\\)\\."
+msgstr "💬 Отправьте объяснение к этой викторине \\(или нажмите {skip_btn}\\)\\."
+
+#: quizbot/handlers/quizzes_fsm.py:233
+msgid ""
+"❗The explanation is too long\\. Please limit it to *200 characters or "
+"fewer*"
+msgstr "❗Объяснение слишком длинное\\. Пожалуйста, ограничьтесь *200 символами или меньше*"
+
+#: quizbot/handlers/quizzes_fsm.py:257 quizbot/handlers/quizzes_fsm.py:310
+#: quizbot/handlers/settings_fsm.py:139 quizbot/handlers/settings_fsm.py:175
+#: quizbot/handlers/settings_fsm.py:220
+msgid "✅ Approve"
+msgstr "✅ Одобрить"
+
+#: quizbot/handlers/quizzes_fsm.py:257 quizbot/handlers/quizzes_fsm.py:301
+#: quizbot/handlers/settings_fsm.py:139 quizbot/handlers/settings_fsm.py:175
+#: quizbot/handlers/settings_fsm.py:211
+msgid "🗑️ Reject"
+msgstr "🗑️ Отклонить"
+
+#: quizbot/handlers/quizzes_fsm.py:261
+#, python-brace-format
+msgid ""
+"📝 *Quiz Preview*\n"
+"\n"
+"📢 *Channel*: {channel}\n"
+"❓ *Question*: {question}\n"
+"🔢 *Options*: \n"
+"{options}\n"
+"✅ *Correct*: {correct}\n"
+"ℹ️ *Explanation*: {explanation}\n"
+"\n"
+"Do you want to approve this quiz\\?"
+msgstr "📝 *Предпросмотр викторины*\n\n📢 *Канал*: {channel}\n❓ *Вопрос*: {question}\n🔢 *Варианты*: \n{options}\n✅ *Правильный*: {correct}\nℹ️ *Объяснение*: {explanation}\n\nВы хотите одобрить эту викторину\\?"
+
+#: quizbot/handlers/quizzes_fsm.py:304
+msgid "🗑️ Quiz creation rejected\\."
+msgstr "🗑️ Создание викторины отклонено\\."
+
+#: quizbot/handlers/quizzes_fsm.py:316
+msgid "🎉 Quiz saved\\!"
+msgstr "🎉 Викторина сохранена\\!"
+
+#: quizbot/handlers/quizzes_fsm.py:331
+msgid "🚫 Quiz creation canceled\\."
+msgstr "🚫 Создание викторины отменено\\."
+
+#: quizbot/handlers/settings_fsm.py:67 quizbot/handlers/settings_fsm.py:89
+#: quizbot/handlers/settings_fsm.py:122 quizbot/handlers/settings_fsm.py:159
+msgid "🕒 Time"
+msgstr "🕒 Время
+
+#: quizbot/handlers/settings_fsm.py:67 quizbot/handlers/settings_fsm.py:99
+#: quizbot/handlers/settings_fsm.py:122 quizbot/handlers/settings_fsm.py:159
+msgid "📚 Quizzes"
+msgstr "📚 Викторины"
+
+#: quizbot/handlers/settings_fsm.py:70 quizbot/handlers/settings_fsm.py:125
+#: quizbot/handlers/settings_fsm.py:162
+msgid "⚙️ Choose what to configure:"
+msgstr "⚙️ Выберите, что настроить:"
+
+#: quizbot/handlers/settings_fsm.py:93
+msgid "⏰ Enter time in *HH:MM* format:"
+msgstr "⏰ Введите время в формате *ЧЧ:ММ*:"
+
+#: quizbot/handlers/settings_fsm.py:103
+msgid "🔢 Enter number of quizzes to send:"
+msgstr "🔢 Введите количество викторин для отправки:"
+
+#: quizbot/handlers/settings_fsm.py:142
+#, python-brace-format
+msgid "❓ Set time to *{time}*?"
+msgstr "❓ Установить время на *{time}*?"
+
+#: quizbot/handlers/settings_fsm.py:148
+msgid "❗ Invalid format\\. Use *HH:MM*"
+msgstr "❗ Неверный формат\\. Используйте *ЧЧ:ММ*"
+
+#: quizbot/handlers/settings_fsm.py:178
+#, python-brace-format
+msgid "❓ Set quiz count to *{count}*?"
+msgstr "❓ Установить количество викторин на *{count}*?"
+
+#: quizbot/handlers/settings_fsm.py:185
+msgid "❗ Please enter a *positive number*"
+msgstr "❗ Пожалуйста, введите *положительное число*"
+
+#: quizbot/handlers/settings_fsm.py:197
+msgid "🔁 Re\\-enter time:"
+msgstr "🔁 Введите время повторно:"
+
+#: quizbot/handlers/settings_fsm.py:205
+msgid "🔁 Re\\-enter quiz count:"
+msgstr "🔁 Введите количество повторно:"
+
+#: quizbot/handlers/settings_fsm.py:214
+msgid "🗑️ Settings rejected\\. Choose again:"
+msgstr "🗑️ Настройки отклонены\\. Выберите снова:"
+
+#: quizbot/handlers/settings_fsm.py:231
+msgid "✅ Settings saved\\! Choose next action:"
+msgstr "✅ Настройки сохранены\\! Выберите следующее действие:"
+
+#: quizbot/handlers/settings_fsm.py:246
+msgid "🚫 Settings configuration canceled\\."
+msgstr "🚫 Настройка отменена\\."
