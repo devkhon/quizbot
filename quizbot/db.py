@@ -1,8 +1,12 @@
+import os
+
+import dotenv
 import redis.asyncio as redis_py
-from config import settings
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-engine = create_async_engine(settings.postgres_url)
+dotenv.load_dotenv()
+
+engine = create_async_engine(os.getenv("POSTGRES_URL", ""))
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
-redis = redis_py.from_url(settings.redis_url, decode_responses=True)
+redis = redis_py.from_url(os.getenv("REDIS_URL", ""), decode_responses=True)

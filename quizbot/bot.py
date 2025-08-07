@@ -1,16 +1,19 @@
+import os
 import random
 
+import dotenv
 from aiogram import Bot
 from aiogram.enums import PollType
 from aiogram.types import BotCommandScopeAllPrivateChats
-from config import settings
 from db import AsyncSessionLocal
 from models import Quiz
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from type import CommandInfo
 
-bot = Bot(settings.bot_token)
+dotenv.load_dotenv()
+
+bot = Bot(os.getenv("BOT_TOKEN", ""))
 
 commands: list[CommandInfo] = [
     CommandInfo(command="start", description="start command"),

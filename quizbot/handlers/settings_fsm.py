@@ -218,7 +218,7 @@ async def handle_confirm(message: Message, state: FSMContext) -> None:
 async def cancel(message: Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer(
-        Msg.CANCELED,
+        Msg.SETTINGS_CANCELED,
         reply_markup=ReplyKeyboardRemove(),
         parse_mode=ParseMode.MARKDOWN_V2,
     )

@@ -56,6 +56,7 @@ class Msg:
     REENTER_QUIZ_COUNT = "🔁 Re\\-enter quiz count:"
     REJECTED_SETTINGS = "🗑️ Settings rejected\\. Choose again:"
     SAVED_SETTINGS = "✅ Settings saved\\! Choose next action:"
+    SETTINGS_CANCELED = "🚫 Changing settings canceled\\."
 
 
 class Btn:
