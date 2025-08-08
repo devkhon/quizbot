@@ -1,4 +1,11 @@
 services:
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup --interval 60
+    restart: unless-stopped
+
   postgres:
     image: postgres:17-alpine
     environment:
@@ -7,24 +14,37 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--requirepass", "redis"]
+    volumes:
+      - redis:/data
+    restart: unless-stopped
 
   migration:
-    build: .
+    image: ghcr.io/fazliddin8515/quizbot:main
     command: poetry run alembic upgrade head
     environment:
       BOT_TOKEN: ${BOT_TOKEN}
       POSTGRES_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       - postgres
 
   app:
-    build: .
+    image: ghcr.io/fazliddin8515/quizbot:main
     environment:
       BOT_TOKEN: ${BOT_TOKEN}
       POSTGRES_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       - postgres
+      - redis
       - migration
+    restart: unless-stopped
 
 volumes:
   postgres:
+  redis:
